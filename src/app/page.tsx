@@ -2,8 +2,10 @@
 
 import ProductCard from "@/components/ProductCard";
 import FiltersBar, { type Filters } from "@/components/FiltersBar";
+import { ProductCardSkeleton } from "@/components/SkeletonLoader";
+import { LoadingSpinner } from "@/components/LoadingOverlay";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useSearch } from "@/context/SearchContext";
 
 const demoProducts = [
@@ -266,6 +268,8 @@ export default function Home() {
   const { searchQuery, setSearchQuery } = useSearch();
   const [showConfetti] = useState(false);
   const [showFlashModal, setShowFlashModal] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Category slug mapping
   const getCategorySlug = (category: string) => {
@@ -285,6 +289,25 @@ export default function Home() {
   const handleFlashModalClose = () => {
     setShowFlashModal(false);
   };
+
+  // Simulate initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Simulate search loading
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      setIsSearching(true);
+      const timer = setTimeout(() => {
+        setIsSearching(false);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, [searchQuery]);
 
   const filtered = useMemo(() => {
     let list = [...demoProducts];
@@ -341,9 +364,17 @@ export default function Home() {
                   onClick={() => {
                     setFilters((f) => ({ ...f, sort: "popularity" }));
                   }}
-                  className="h-10 rounded-xl bg-orange-600 px-4 text-sm font-medium text-white hover:bg-orange-700"
+                  disabled={isSearching}
+                  className="h-10 rounded-xl bg-orange-600 px-4 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-75 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  Ara
+                  {isSearching ? (
+                    <>
+                      <LoadingSpinner size="sm" />
+                      Aranıyor...
+                    </>
+                  ) : (
+                    "Ara"
+                  )}
                 </button>
               </div>
             </div>
@@ -502,9 +533,15 @@ export default function Home() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {filtered.slice(0, 12).map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
+                {isInitialLoading ? (
+                  Array.from({ length: 12 }).map((_, index) => (
+                    <ProductCardSkeleton key={index} />
+                  ))
+                ) : (
+                  filtered.slice(0, 12).map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -526,9 +563,15 @@ export default function Home() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-                {filtered.slice(12, 24).map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
+                {isInitialLoading ? (
+                  Array.from({ length: 12 }).map((_, index) => (
+                    <ProductCardSkeleton key={index} />
+                  ))
+                ) : (
+                  filtered.slice(12, 24).map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -547,9 +590,15 @@ export default function Home() {
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {filtered.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
+                {isSearching ? (
+                  Array.from({ length: 8 }).map((_, index) => (
+                    <ProductCardSkeleton key={index} />
+                  ))
+                ) : (
+                  filtered.map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))
+                )}
               </div>
             </div>
           )}

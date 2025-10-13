@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useCart } from "@/context/CartContext";
+import { useToastContext } from "@/context/ToastContext";
 // add-to-cart is only available on product detail page
 
 type Product = {
@@ -14,6 +16,15 @@ type Product = {
 };
 
 export default function ProductCard({ product }: { product: Product }) {
+	const { addToCart } = useCart();
+	const { success } = useToastContext();
+
+	const handleAddToCart = (e: React.MouseEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		addToCart(product, 1);
+		success("Ürün Sepete Eklendi!", `${product.title} sepetinize eklendi.`);
+	};
 
 	return (
 		<div className="group rounded-2xl border border-black/5 bg-white p-4 shadow-sm hover:shadow-md transition-shadow">
@@ -43,6 +54,14 @@ export default function ProductCard({ product }: { product: Product }) {
 						<span className="text-xs text-slate-600">⭐ {product.rating.toFixed(1)}</span>
 					) : null}
 				</div>
+				
+				{/* Add to Cart Button */}
+				<button
+					onClick={handleAddToCart}
+					className="w-full mt-3 bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-orange-700 transition-colors opacity-0 group-hover:opacity-100"
+				>
+					Sepete Ekle
+				</button>
 			</div>
 		</div>
 	);

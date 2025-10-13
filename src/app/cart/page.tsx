@@ -1,12 +1,15 @@
 "use client";
 
 import { useCart } from "@/context/CartContext";
+import { useToastContext } from "@/context/ToastContext";
+import { LoadingButton } from "@/components/LoadingOverlay";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 export default function CartPage() {
 	const { items, addToCart, removeFromCart, clearCart } = useCart();
+	const { success } = useToastContext();
 	const [isCheckingOut, setIsCheckingOut] = useState(false);
 
 	const totalPrice = items.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -29,7 +32,7 @@ export default function CartPage() {
 		setTimeout(() => {
 			clearCart();
 			setIsCheckingOut(false);
-			alert("Siparişiniz başarıyla oluşturuldu!");
+			success("Sipariş Başarılı!", "Siparişiniz başarıyla oluşturuldu ve onay e-postası gönderildi.");
 		}, 2000);
 	};
 
@@ -167,13 +170,14 @@ export default function CartPage() {
 							</div>
 						)}
 
-						<button
+						<LoadingButton
 							onClick={handleCheckout}
-							disabled={isCheckingOut}
-							className="w-full btn btn-primary py-3 text-lg font-semibold disabled:opacity-50"
+							isLoading={isCheckingOut}
+							loadingText="Sipariş Oluşturuluyor..."
+							className="w-full btn btn-primary py-3 text-lg font-semibold"
 						>
-							{isCheckingOut ? "Sipariş Oluşturuluyor..." : "Siparişi Tamamla"}
-						</button>
+							Siparişi Tamamla
+						</LoadingButton>
 
 						<div className="mt-4 text-center">
 							<p className="text-sm text-gray-600">

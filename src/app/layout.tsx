@@ -5,6 +5,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { CartProvider } from "@/context/CartContext";
 import { SearchProvider } from "@/context/SearchContext";
+import { LoadingProvider } from "@/context/LoadingContext";
+import { ToastProvider } from "@/context/ToastContext";
+import LoadingOverlay from "@/components/LoadingOverlay";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -29,13 +33,20 @@ export default function RootLayout({
 	return (
 		<html lang="tr">
 			<body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-				<CartProvider>
-					<SearchProvider>
-						<Navbar />
-						<main className="flex-1">{children}</main>
-						<Footer />
-					</SearchProvider>
-				</CartProvider>
+				<ErrorBoundary>
+					<ToastProvider>
+						<LoadingProvider>
+							<CartProvider>
+								<SearchProvider>
+									<Navbar />
+									<main className="flex-1">{children}</main>
+									<Footer />
+									<LoadingOverlay />
+								</SearchProvider>
+							</CartProvider>
+						</LoadingProvider>
+					</ToastProvider>
+				</ErrorBoundary>
 			</body>
 		</html>
 	);
