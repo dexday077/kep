@@ -1,0 +1,221 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3f4f6; /* gray-100 - light gray background */
+  --foreground: #111827; /* gray-900 - dark gray text */
+  --primary: #2563eb; /* blue-600 - trust & commerce */
+  --primary-foreground: #ffffff;
+  --secondary: #f97316; /* orange-500 - energy & CTA */
+  --secondary-foreground: #ffffff;
+  --accent: #facc15; /* yellow-400 - gold for premium */
+  --accent-foreground: #111827;
+  --muted: #f9fafb; /* gray-50 */
+  --muted-foreground: #6b7280; /* gray-500 */
+  --card: #f9fafb; /* gray-50 - soft grayish-white */
+  --card-foreground: #111827;
+  --border: rgba(17, 24, 39, 0.1);
+  --radius: 16px;
+  --shadow-sm: 0 1px 2px rgba(17, 24, 39, 0.05);
+  --shadow-lg: 0 8px 28px rgba(17, 24, 39, 0.08);
+  --bg-dot: rgba(17, 24, 39, 0.04); /* very light dots */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(var(--bg-dot) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-attachment: fixed;
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Premium surfaces */
+.surface {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.surface-elevated {
+  background-color: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Buttons */
+.btn {
+  height: 42px;
+  border-radius: 999px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.16), 0 6px 16px rgba(37, 99, 235, 0.16);
+}
+.btn-primary:hover { 
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  box-shadow: 0 1px 2px rgba(249, 115, 22, 0.16), 0 6px 16px rgba(249, 115, 22, 0.16);
+}
+.btn-secondary:hover { 
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: #f9fafb; /* gray-50 */
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { 
+  background: #f3f4f6; /* gray-100 */
+  border-color: var(--primary);
+}
+
+/* Professional gradient helpers */
+.soft-gradient-primary {
+  background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(37,99,235,0.05));
+}
+.soft-gradient-secondary {
+  background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(249,115,22,0.05));
+}
+.soft-gradient-accent {
+  background: linear-gradient(135deg, rgba(250,204,21,0.1), rgba(250,204,21,0.05));
+}
+
+/* Subtle hover surface */
+.surface:hover {
+  box-shadow: 0 2px 8px rgba(2, 6, 23, 0.06);
+}
+
+/* Animations */
+@keyframes slide {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { 
+    box-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bounce-in {
+  0% { transform: translateY(-20px); opacity: 0; }
+  50% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+@keyframes confetti-fall {
+  0% { 
+    transform: translateY(-100px) rotate(0deg) scale(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0px) rotate(180deg) scale(1);
+    opacity: 0.8;
+  }
+  100% { 
+    transform: translateY(100px) rotate(360deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti-spiral {
+  0% { 
+    transform: translateY(-50px) rotate(0deg) scale(0.5);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0px) rotate(180deg) scale(1);
+    opacity: 0.9;
+  }
+  100% { 
+    transform: translateY(50px) rotate(360deg) scale(0.3);
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Animation classes */
+.slide-animation {
+  animation: slide 20s linear infinite;
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+.float-animation {
+  animation: float 3s ease-in-out infinite;
+}
+
+.wiggle-animation {
+  animation: wiggle 1s ease-in-out infinite;
+}
+
+.shimmer-effect {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Hover animations */
+.hover-lift:hover {
+  transform: translateY(-4px);
+  transition: transform 0.3s ease;
+}
+
+.hover-scale:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s ease;
+}
+
+.hover-rotate:hover {
+  transform: rotate(5deg);
+  transition: transform 0.3s ease;
+}
