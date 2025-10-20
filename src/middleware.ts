@@ -1,15 +1,23 @@
-import { createMiddlewareClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   try {
     const response = NextResponse.next();
-    const supabase = createMiddlewareClient({ req: request, res: response });
+    
+    // Check if Supabase is enabled
+    const useSupabase = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true';
+    
+    if (!useSupabase) {
+      // Mock mode - skip authentication checks
+      return response;
+    }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
+    // Supabase mode would go here (currently disabled)
+    // const supabase = createMiddlewareClient({ req: request, res: response });
+    // const { data: { session } } = await supabase.auth.getSession();
+    
+    const session = null; // Mock session for now
 
     // Admin routes that require authentication
     const adminRoutes = ["/admin"];

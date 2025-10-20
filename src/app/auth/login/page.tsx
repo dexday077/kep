@@ -49,17 +49,16 @@ export default function LoginPage() {
             <Link href="/" className="inline-block group">
               <div className="relative">
                 <h1 className="text-4xl font-bold tracking-tight text-gray-900 transition-all duration-300 group-hover:scale-110">
-                  Kep <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Marketplace</span>
+                 <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">HOŞGELDİNİZ 👋</span>
                 </h1>
                 <div className="absolute -inset-2 bg-blue-100 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full -z-10"></div>
               </div>
             </Link>
             <div className="mt-8 relative">
               <h2 className="text-3xl font-bold text-gray-900 animate-fade-in">
-                Hoş Geldiniz 👋
               </h2>
               <p className="mt-3 text-lg text-gray-600 animate-fade-in animation-delay-200">
-                Hesabınıza giriş yapın
+
               </p>
             </div>
           </div>

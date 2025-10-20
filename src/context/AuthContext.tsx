@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseEnabled } from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -20,6 +20,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Mock user database (only used when Supabase is disabled)
+const mockUsers: Record<string, { email: string; password: string; role: "customer" | "seller" | "admin"; id: string }> = {
+  "test@test.com": { 
+    email: "test@test.com", 
+    password: "123456", 
+    role: "customer",
+    id: "mock-user-1"
+  },
+  "admin@test.com": { 
+    email: "admin@test.com", 
+    password: "123456", 
+    role: "admin",
+    id: "mock-admin-1"
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -29,7 +45,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   >(null);
 
   useEffect(() => {
-    // Get initial session
+    if (!isSupabaseEnabled) {
+      // Mock mode - check localStorage
+      const mockSession = localStorage.getItem("mockSession");
+      if (mockSession) {
+        const sessionData = JSON.parse(mockSession);
+        setUser(sessionData.user as any);
+        setUserRole(sessionData.role);
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Supabase mode
     const getInitialSession = async () => {
       const {
         data: { session },
@@ -46,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getInitialSession();
 
-    // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -61,12 +88,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserRole(null);
       }
 
-      // Handle session expiry
       if (event === "SIGNED_OUT") {
         setUserRole(null);
       }
 
-      // Handle token refresh errors
       if (event === "TOKEN_REFRESHED") {
         console.log("Token refreshed successfully");
       }
@@ -74,7 +99,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Check session validity every 5 minutes
     const checkSession = setInterval(async () => {
       const {
         data: { session },
@@ -85,7 +109,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Session expired or invalid, logging out...");
         await supabase.auth.signOut();
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 5 * 60 * 1000);
 
     return () => {
       subscription.unsubscribe();
@@ -103,17 +127,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error("Error fetching user role:", error);
-        setUserRole("customer"); // Default role
+        setUserRole("customer");
       } else {
         setUserRole(data?.role || "customer");
       }
     } catch (error) {
       console.error("Error fetching user role:", error);
-      setUserRole("customer"); // Default role
+      setUserRole("customer");
     }
   };
 
   const signIn = async (email: string, password: string) => {
+    if (!isSupabaseEnabled) {
+      // Mock authentication
+      const mockUser = mockUsers[email];
+      
+      if (!mockUser || mockUser.password !== password) {
+        return { 
+          error: { 
+            message: "Email veya şifre hatalı" 
+          } 
+        };
+      }
+
+      // Create mock session
+      const mockSession = {
+        user: {
+          id: mockUser.id,
+          email: mockUser.email,
+          app_metadata: {},
+          user_metadata: {},
+          aud: "authenticated",
+          created_at: new Date().toISOString()
+        },
+        role: mockUser.role
+      };
+
+      localStorage.setItem("mockSession", JSON.stringify(mockSession));
+      setUser(mockSession.user as any);
+      setUserRole(mockUser.role);
+
+      return { error: null };
+    }
+
+    // Supabase authentication
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -126,13 +183,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string,
     userRole: "customer" | "seller" | "admin"
   ) => {
+    if (!isSupabaseEnabled) {
+      // Mock registration
+      if (mockUsers[email]) {
+        return { 
+          error: { 
+            message: "Bu email adresi zaten kullanılıyor" 
+          } 
+        };
+      }
+
+      // Add to mock users
+      const newUserId = `mock-user-${Date.now()}`;
+      mockUsers[email] = {
+        email,
+        password,
+        role: userRole,
+        id: newUserId
+      };
+
+      return { error: null };
+    }
+
+    // Supabase registration
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
     if (!error && data.user) {
-      // Create user profile with role
       const { error: profileError } = await supabase.from("profiles").insert([
         {
           id: data.user.id,
@@ -152,6 +231,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    if (!isSupabaseEnabled) {
+      // Mock sign out
+      localStorage.removeItem("mockSession");
+      setUser(null);
+      setUserRole(null);
+      return;
+    }
+
+    // Supabase sign out
     await supabase.auth.signOut();
   };
 

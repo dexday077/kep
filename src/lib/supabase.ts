@@ -1,9 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const USE_SUPABASE = process.env.NEXT_PUBLIC_USE_SUPABASE === 'true';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = USE_SUPABASE 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null as any; // Mock mode
+
+export const isSupabaseEnabled = USE_SUPABASE;
 
 // Database types
 export interface Database {
