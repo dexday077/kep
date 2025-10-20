@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { ProductCardSkeleton } from "@/components/SkeletonLoader";
 
 const flashSaleProducts = [
   {
@@ -144,6 +145,7 @@ export default function FlashSalePage() {
     minutes: 45,
     seconds: 12,
   });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -161,6 +163,13 @@ export default function FlashSalePage() {
     }, 1000);
 
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   return (
@@ -226,61 +235,65 @@ export default function FlashSalePage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
-            {flashSaleProducts.map((product) => (
-              <div key={product.id} className="group relative">
-                <div className="bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-orange-200">
-                  {/* Discount Badge */}
-                  <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10 animate-pulse">
-                    -%{product.discount}
-                  </div>
-
-                  {/* Product Image */}
-                  <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-gray-50 to-gray-100 mb-3">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-110"
-                    />
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="space-y-2">
-                    <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
-                      {product.title}
-                    </h3>
-
-                    {/* Price */}
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-orange-600">
-                          ₺{product.price.toLocaleString("tr-TR")}
-                        </span>
-                        <span className="text-sm text-gray-500 line-through">
-                          ₺{product.originalPrice.toLocaleString("tr-TR")}
-                        </span>
+            {isLoading
+              ? Array.from({ length: 12 }).map((_, index) => (
+                  <ProductCardSkeleton key={index} />
+                ))
+              : flashSaleProducts.map((product) => (
+                  <div key={product.id} className="group relative">
+                    <div className="bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-orange-200">
+                      {/* Discount Badge */}
+                      <div className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10 animate-pulse">
+                        -%{product.discount}
                       </div>
-                      <div className="text-xs text-green-600 font-medium">
-                        ₺
-                        {(product.originalPrice - product.price).toLocaleString(
-                          "tr-TR"
-                        )}{" "}
-                        tasarruf!
+
+                      {/* Product Image */}
+                      <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-b from-gray-50 to-gray-100 mb-3">
+                        <img
+                          src={product.image}
+                          alt={product.title}
+                          className="h-full w-full object-contain p-4 transition-transform duration-300 group-hover:scale-110"
+                        />
+                      </div>
+
+                      {/* Product Info */}
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-gray-900 text-sm line-clamp-2">
+                          {product.title}
+                        </h3>
+
+                        {/* Price */}
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-lg font-bold text-orange-600">
+                              ₺{product.price.toLocaleString("tr-TR")}
+                            </span>
+                            <span className="text-sm text-gray-500 line-through">
+                              ₺{product.originalPrice.toLocaleString("tr-TR")}
+                            </span>
+                          </div>
+                          <div className="text-xs text-green-600 font-medium">
+                            ₺
+                            {(
+                              product.originalPrice - product.price
+                            ).toLocaleString("tr-TR")}{" "}
+                            tasarruf!
+                          </div>
+                        </div>
+
+                        {/* Rating */}
+                        {product.rating && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-yellow-400">⭐</span>
+                            <span className="text-xs text-gray-600">
+                              {product.rating.toFixed(1)}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
-
-                    {/* Rating */}
-                    {product.rating && (
-                      <div className="flex items-center space-x-1">
-                        <span className="text-yellow-400">⭐</span>
-                        <span className="text-xs text-gray-600">
-                          {product.rating.toFixed(1)}
-                        </span>
-                      </div>
-                    )}
                   </div>
-                </div>
-              </div>
-            ))}
+                ))}
           </div>
         </div>
       </div>

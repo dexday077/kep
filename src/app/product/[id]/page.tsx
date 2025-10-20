@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import { useParams } from "next/navigation";
+import { ProductDetailSkeleton } from "@/components/SkeletonLoader";
 
 type Product = {
   id: string;
@@ -35,9 +36,22 @@ export default function ProductPage() {
   const [tab, setTab] = useState<"desc" | "specs" | "reviews">("desc");
   const [activeImageIdx, setActiveImageIdx] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const canDecrease = useMemo(() => quantity > 1, [quantity]);
   const canIncrease = useMemo(() => quantity < 10, [quantity]);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [id]);
+
+  if (isLoading) {
+    return <ProductDetailSkeleton />;
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">

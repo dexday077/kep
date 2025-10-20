@@ -2,12 +2,17 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { useState } from "react";
 
 export default function Navbar() {
   const { count } = useCart();
   const pathname = usePathname();
+  const router = useRouter();
   const isKitchen = pathname?.startsWith("/kitchen");
+  const { user, userRole, signOut } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-black/5 bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/70">
@@ -49,21 +54,94 @@ export default function Navbar() {
                 <span className="hidden sm:inline">KepKitchen</span>
               </Link>
             )}
-            <Link
-              href="/account"
-              className="inline-flex h-10 items-center rounded-full px-3 text-sm hover:bg-black/5"
-            >
-              <span className="mr-2">👤</span>
-              <span className="hidden sm:inline">Hesabım</span>
-            </Link>
-            <span className="mx-1 h-6 w-px bg-black/10" />
-            <Link
-              href="/orders"
-              className="inline-flex h-10 items-center rounded-full px-3 text-sm hover:bg-black/5"
-            >
-              <span className="mr-2">📦</span>
-              <span className="hidden sm:inline">Siparişler</span>
-            </Link>
+
+            {/* Kullanıcı Menüsü */}
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="inline-flex h-10 items-center rounded-full px-3 text-sm hover:bg-black/5"
+                >
+                  <span className="mr-2">👤</span>
+                  <span className="hidden sm:inline">
+                    {user.email?.split("@")[0]}
+                  </span>
+                  <span className="ml-1">▾</span>
+                </button>
+
+                {showUserMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setShowUserMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-56 origin-top-right rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
+                      <div className="p-2">
+                        <div className="px-3 py-2 text-sm text-gray-500 border-b">
+                          <div className="font-medium text-gray-900">
+                            {user.email}
+                          </div>
+                          <div className="text-xs">
+                            {userRole === "admin"
+                              ? "Yönetici"
+                              : userRole === "seller"
+                              ? "Satıcı"
+                              : "Müşteri"}
+                          </div>
+                        </div>
+                        <Link
+                          href="/account"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 rounded hover:bg-gray-100 mt-1"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <span className="mr-2">👤</span>
+                          Hesabım
+                        </Link>
+                        <Link
+                          href="/orders"
+                          className="flex items-center px-3 py-2 text-sm text-gray-700 rounded hover:bg-gray-100"
+                          onClick={() => setShowUserMenu(false)}
+                        >
+                          <span className="mr-2">📦</span>
+                          Siparişlerim
+                        </Link>
+                        {(userRole === "admin" || userRole === "seller") && (
+                          <Link
+                            href="/admin"
+                            className="flex items-center px-3 py-2 text-sm text-gray-700 rounded hover:bg-gray-100"
+                            onClick={() => setShowUserMenu(false)}
+                          >
+                            <span className="mr-2">⚙️</span>
+                            Admin Panel
+                          </Link>
+                        )}
+                        <hr className="my-1" />
+                        <button
+                          onClick={async () => {
+                            await signOut();
+                            setShowUserMenu(false);
+                            router.push("/");
+                          }}
+                          className="flex items-center w-full px-3 py-2 text-sm text-red-600 rounded hover:bg-red-50"
+                        >
+                          <span className="mr-2">🚪</span>
+                          Çıkış Yap
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="inline-flex h-10 items-center rounded-full px-3 text-sm hover:bg-black/5"
+              >
+                <span className="mr-2">🔑</span>
+                <span className="hidden sm:inline">Giriş Yap</span>
+              </Link>
+            )}
+
             <span className="mx-1 h-6 w-px bg-black/10" />
             <Link
               href="/cart"

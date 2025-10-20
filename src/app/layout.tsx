@@ -7,47 +7,52 @@ import { CartProvider } from "@/context/CartContext";
 import { SearchProvider } from "@/context/SearchContext";
 import { LoadingProvider } from "@/context/LoadingContext";
 import { ToastProvider } from "@/context/ToastContext";
+import { AuthProvider } from "@/context/AuthContext";
 import LoadingOverlay from "@/components/LoadingOverlay";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-	title: "Kep Marketplace",
-	description: "Amazon ve eBay mantığında modern e-ticaret.",
+  title: "Kep Marketplace",
+  description: "Amazon ve eBay mantığında modern e-ticaret.",
 };
 
 export default function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	return (
-		<html lang="tr">
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
-				<ErrorBoundary>
-					<ToastProvider>
-						<LoadingProvider>
-							<CartProvider>
-								<SearchProvider>
-									<Navbar />
-									<main className="flex-1">{children}</main>
-									<Footer />
-									<LoadingOverlay />
-								</SearchProvider>
-							</CartProvider>
-						</LoadingProvider>
-					</ToastProvider>
-				</ErrorBoundary>
-			</body>
-		</html>
-	);
+  return (
+    <html lang="tr">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
+      >
+        <ErrorBoundary>
+          <AuthProvider>
+            <ToastProvider>
+              <LoadingProvider>
+                <CartProvider>
+                  <SearchProvider>
+                    <Navbar />
+                    <main className="flex-1">{children}</main>
+                    <Footer />
+                    <LoadingOverlay />
+                  </SearchProvider>
+                </CartProvider>
+              </LoadingProvider>
+            </ToastProvider>
+          </AuthProvider>
+        </ErrorBoundary>
+      </body>
+    </html>
+  );
 }

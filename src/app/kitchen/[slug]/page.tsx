@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
 import { getRestaurantBySlug } from "@/data/kitchen";
 import { useCart } from "@/context/CartContext";
+import { RestaurantMenuSkeleton } from "@/components/SkeletonLoader";
 
 export default function RestaurantPage() {
   const params = useParams();
@@ -12,8 +13,20 @@ export default function RestaurantPage() {
   const restaurant = getRestaurantBySlug(slug);
   const { addToCart } = useCart();
   const [qtyById, setQtyById] = useState<Record<string, number>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [slug]);
 
   if (!restaurant) return notFound();
+
+  if (isLoading) {
+    return <RestaurantMenuSkeleton />;
+  }
 
   return (
     <main className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-0">

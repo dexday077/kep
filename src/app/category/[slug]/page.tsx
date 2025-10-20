@@ -2,7 +2,8 @@
 
 import ProductCard from "@/components/ProductCard";
 import { type Filters } from "@/components/FiltersBar";
-import { useMemo, useState } from "react";
+import { ProductCardSkeleton } from "@/components/SkeletonLoader";
+import { useMemo, useState, useEffect } from "react";
 import { useSearch } from "@/context/SearchContext";
 import { useParams } from "next/navigation";
 
@@ -341,8 +342,18 @@ export default function CategoryPage() {
   const [advantageousProducts, setAdvantageousProducts] =
     useState<boolean>(false);
   const { searchQuery } = useSearch();
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const category = categories[slug as keyof typeof categories];
+
+  // Simulate initial loading
+  useEffect(() => {
+    setIsLoading(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [slug]);
 
   const filtered = useMemo(() => {
     if (!category) return [];
@@ -509,9 +520,11 @@ export default function CategoryPage() {
             {/* Products Grid */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {filtered.map((p) => (
-                  <ProductCard key={p.id} product={p} />
-                ))}
+                {isLoading
+                  ? Array.from({ length: 10 }).map((_, index) => (
+                      <ProductCardSkeleton key={index} />
+                    ))
+                  : filtered.map((p) => <ProductCard key={p.id} product={p} />)}
               </div>
             </div>
           </div>

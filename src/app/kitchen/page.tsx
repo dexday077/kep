@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { getRestaurants } from "@/data/kitchen";
 import CategoryChips from "@/components/CategoryChips";
 import RestaurantCard from "@/components/RestaurantCard";
+import { RestaurantCardSkeleton } from "@/components/SkeletonLoader";
 
 export default function KepKitchenPage() {
   const base = getRestaurants();
@@ -12,6 +13,7 @@ export default function KepKitchenPage() {
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>(["Tümü"]);
   const [showFilters, setShowFilters] = useState(false);
   const [showAllCuisines, setShowAllCuisines] = useState(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   // New filter states
   const [popularFilters, setPopularFilters] = useState<{
     yedikce?: boolean;
@@ -27,6 +29,14 @@ export default function KepKitchenPage() {
   const [minBasket, setMinBasket] = useState<number | null>(null); // 200,300,400
   const [etaLimit, setEtaLimit] = useState<number | null>(null); // minutes
   const [distanceLimit, setDistanceLimit] = useState<number | null>(null); // km
+
+  // Simulate initial loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
 
   const list = useMemo(() => {
     const filtered = base.filter((r) => {
@@ -579,7 +589,13 @@ export default function KepKitchenPage() {
               </div>
             </div>
 
-            {list.length === 0 ? (
+            {isLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 9 }).map((_, index) => (
+                  <RestaurantCardSkeleton key={index} />
+                ))}
+              </div>
+            ) : list.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">🔍</div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">
