@@ -25,17 +25,14 @@ create table profiles (
 alter table profiles enable row level security;
 
 -- Policies for profiles
-create policy "Public profiles are viewable by everyone"
+create policy "Profiles access policy"
   on profiles for select
   using (true);
 
-create policy "Users can insert their own profile"
-  on profiles for insert
-  with check (auth.uid() = id);
-
-create policy "Users can update their own profile"
-  on profiles for update
-  using (auth.uid() = id);
+create policy "Users can manage their own profile"
+  on profiles for all
+  using ((select auth.uid()) = id)
+  with check ((select auth.uid()) = id);
 
 -- ============================================
 -- 2. CATEGORIES TABLE
@@ -52,16 +49,20 @@ create table categories (
 
 alter table categories enable row level security;
 
-create policy "Categories are viewable by everyone"
-  on categories for select
-  using (is_active = true);
-
-create policy "Only admins can manage categories"
+create policy "Categories access policy"
   on categories for all
   using (
+    is_active = true or
     exists (
       select 1 from profiles
-      where profiles.id = auth.uid()
+      where profiles.id = (select auth.uid())
+      and profiles.role = 'admin'
+    )
+  )
+  with check (
+    exists (
+      select 1 from profiles
+      where profiles.id = (select auth.uid())
       and profiles.role = 'admin'
     )
   );
@@ -92,40 +93,23 @@ create table products (
 alter table products enable row level security;
 
 -- Policies for products
-create policy "Products are viewable by everyone"
-  on products for select
-  using (is_active = true);
-
-create policy "Sellers can insert their own products"
-  on products for insert
+create policy "Products access policy"
+  on products for all
+  using (
+    is_active = true or
+    (select auth.uid()) = seller_id or
+    exists (
+      select 1 from profiles
+      where profiles.id = (select auth.uid())
+      and profiles.role = 'admin'
+    )
+  )
   with check (
-    auth.uid() = seller_id and
+    (select auth.uid()) = seller_id and
     exists (
       select 1 from profiles
-      where profiles.id = auth.uid()
+      where profiles.id = (select auth.uid())
       and profiles.role in ('seller', 'admin')
-    )
-  );
-
-create policy "Sellers can update their own products"
-  on products for update
-  using (
-    auth.uid() = seller_id or
-    exists (
-      select 1 from profiles
-      where profiles.id = auth.uid()
-      and profiles.role = 'admin'
-    )
-  );
-
-create policy "Sellers can delete their own products"
-  on products for delete
-  using (
-    auth.uid() = seller_id or
-    exists (
-      select 1 from profiles
-      where profiles.id = auth.uid()
-      and profiles.role = 'admin'
     )
   );
 
@@ -154,18 +138,23 @@ create table restaurants (
 
 alter table restaurants enable row level security;
 
--- Policies for restaurants (similar to products)
-create policy "Restaurants are viewable by everyone"
-  on restaurants for select
-  using (is_active = true);
-
-create policy "Sellers can manage their restaurants"
+-- Policies for restaurants
+create policy "Restaurants access policy"
   on restaurants for all
   using (
-    auth.uid() = seller_id or
+    is_active = true or
+    (select auth.uid()) = seller_id or
     exists (
       select 1 from profiles
-      where profiles.id = auth.uid()
+      where profiles.id = (select auth.uid())
+      and profiles.role = 'admin'
+    )
+  )
+  with check (
+    (select auth.uid()) = seller_id or
+    exists (
+      select 1 from profiles
+      where profiles.id = (select auth.uid())
       and profiles.role = 'admin'
     )
   );
@@ -213,35 +202,23 @@ create table orders (
 alter table orders enable row level security;
 
 -- Policies for orders
-create policy "Customers can view their own orders"
-  on orders for select
-  using (auth.uid() = customer_id);
-
-create policy "Sellers can view their orders"
-  on orders for select
-  using (auth.uid() = seller_id);
-
-create policy "Admins can view all orders"
-  on orders for select
+create policy "Orders access policy"
+  on orders for all
   using (
+    (select auth.uid()) = customer_id or
+    (select auth.uid()) = seller_id or
     exists (
       select 1 from profiles
-      where profiles.id = auth.uid()
+      where profiles.id = (select auth.uid())
       and profiles.role = 'admin'
     )
-  );
-
-create policy "Customers can create orders"
-  on orders for insert
-  with check (auth.uid() = customer_id);
-
-create policy "Sellers can update their orders"
-  on orders for update
-  using (
-    auth.uid() = seller_id or
+  )
+  with check (
+    (select auth.uid()) = customer_id or
+    (select auth.uid()) = seller_id or
     exists (
       select 1 from profiles
-      where profiles.id = auth.uid()
+      where profiles.id = (select auth.uid())
       and profiles.role = 'admin'
     )
   );
@@ -266,13 +243,10 @@ create table reviews (
 
 alter table reviews enable row level security;
 
-create policy "Reviews are viewable by everyone"
-  on reviews for select
-  using (true);
-
-create policy "Customers can create reviews"
-  on reviews for insert
-  with check (auth.uid() = customer_id);
+create policy "Reviews access policy"
+  on reviews for all
+  using (true)
+  with check ((select auth.uid()) = customer_id);
 
 -- ============================================
 -- 8. FUNCTIONS & TRIGGERS
@@ -285,7 +259,7 @@ begin
   new.updated_at = now();
   return new;
 end;
-$$ language plpgsql;
+$$ language plpgsql security definer set search_path = public;
 
 -- Add triggers to all tables
 create trigger update_profiles_updated_at before update on profiles
@@ -308,7 +282,7 @@ begin
   values (new.id, new.email, new.raw_user_meta_data->>'full_name', 'customer');
   return new;
 end;
-$$ language plpgsql security definer;
+$$ language plpgsql security definer set search_path = public;
 
 -- Trigger to create profile
 create trigger on_auth_user_created
@@ -336,6 +310,10 @@ insert into categories (name, slug, description, icon) values
 -- 2. Set up authentication in Supabase dashboard
 -- 3. Get your API keys and add to .env.local
 -- 4. Start building admin panel!
+
+
+
+
 
 
 

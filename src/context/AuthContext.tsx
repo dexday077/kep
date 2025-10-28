@@ -1,21 +1,17 @@
-"use client";
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (
-    email: string,
-    password: string,
-    userRole: "customer" | "seller" | "admin"
-  ) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, userRole: 'customer' | 'seller', additionalData?: { fullName?: string; phone?: string; shopName?: string }) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  userRole: "customer" | "seller" | "admin" | null;
+  userRole: 'customer' | 'seller' | 'admin' | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,9 +20,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userRole, setUserRole] = useState<
-    "customer" | "seller" | "admin" | null
-  >(null);
+  const [userRole, setUserRole] = useState<'customer' | 'seller' | 'admin' | null>(null);
 
   useEffect(() => {
     // Get initial session
@@ -50,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed:", event);
+      console.log('Auth state changed:', event);
 
       setSession(session);
       setUser(session?.user ?? null);
@@ -62,13 +56,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Handle session expiry
-      if (event === "SIGNED_OUT") {
+      if (event === 'SIGNED_OUT') {
         setUserRole(null);
       }
 
       // Handle token refresh errors
-      if (event === "TOKEN_REFRESHED") {
-        console.log("Token refreshed successfully");
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully');
       }
 
       setLoading(false);
@@ -82,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } = await supabase.auth.getSession();
 
       if (error || !session) {
-        console.log("Session expired or invalid, logging out...");
+        console.log('Session expired or invalid, logging out...');
         await supabase.auth.signOut();
       }
     }, 5 * 60 * 1000); // 5 minutes
@@ -95,21 +89,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserRole = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single();
+      const { data, error } = await supabase.from('profiles').select('role, tenant_id').eq('id', userId).single();
 
       if (error) {
-        console.error("Error fetching user role:", error);
-        setUserRole("customer"); // Default role
+        // Profile henüz oluşturulmamış olabilir, bu normal
+        if (error.code === 'PGRST116') {
+          // No rows returned - profile doesn't exist yet
+          console.log('Profile not found yet, will be created by trigger');
+          setUserRole('customer'); // Default role
+          return;
+        }
+        // Diğer hatalar için sadece console'da logla
+        console.warn('Error fetching user role:', error.message || error);
+        setUserRole('customer'); // Default role
       } else {
-        setUserRole(data?.role || "customer");
+        setUserRole(data?.role || 'customer');
       }
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      setUserRole("customer"); // Default role
+    } catch (error: any) {
+      // Genel hatalar için
+      console.warn('Error fetching user role:', error?.message || 'Unknown error');
+      setUserRole('customer'); // Default role
     }
   };
 
@@ -121,34 +120,77 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
-  const signUp = async (
-    email: string,
-    password: string,
-    userRole: "customer" | "seller" | "admin"
-  ) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (!error && data.user) {
-      // Create user profile with role
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: data.user.id,
-          email: data.user.email,
-          role: userRole,
-          created_at: new Date().toISOString(),
+  const signUp = async (email: string, password: string, userRole: 'customer' | 'seller', additionalData?: { fullName?: string; phone?: string; shopName?: string }) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: additionalData?.fullName || '',
+            role: userRole,
+          },
         },
-      ]);
+      });
 
-      if (profileError) {
-        console.error("Error creating profile:", profileError);
-        return { error: profileError };
+      if (error) {
+        console.error('Auth signup error:', error);
+        return { error };
       }
-    }
 
-    return { error };
+      if (data.user) {
+        // Wait a bit for the trigger to potentially create the profile
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // Check if profile already exists (might be created by trigger)
+        const { data: existingProfile } = await supabase.from('profiles').select('id').eq('id', data.user.id).single();
+
+        // Only insert if profile doesn't exist
+        if (!existingProfile) {
+          const profileData: any = {
+            id: data.user.id,
+            email: data.user.email,
+            role: userRole,
+            tenant_id: '00000000-0000-0000-0000-000000000001', // Default tenant
+            created_at: new Date().toISOString(),
+          };
+
+          // Add optional fields
+          if (additionalData?.fullName) {
+            profileData.full_name = additionalData.fullName;
+          }
+          if (additionalData?.phone) {
+            profileData.phone = additionalData.phone;
+          }
+          if (userRole === 'seller' && additionalData?.shopName) {
+            profileData.shop_name = additionalData.shopName;
+          }
+
+          const { error: profileError } = await supabase.from('profiles').insert([profileData]);
+
+          if (profileError) {
+            console.warn('Error creating profile:', profileError.message || profileError);
+            // Don't return error here - user is already created in auth
+            // Profile will be created by trigger or can be updated later
+          }
+        } else {
+          // Profile exists, update it with additional data if needed
+          const updateData: any = {};
+          if (additionalData?.fullName) updateData.full_name = additionalData.fullName;
+          if (additionalData?.phone) updateData.phone = additionalData.phone;
+          if (userRole === 'seller' && additionalData?.shopName) updateData.shop_name = additionalData.shopName;
+
+          if (Object.keys(updateData).length > 0) {
+            await supabase.from('profiles').update(updateData).eq('id', data.user.id);
+          }
+        }
+      }
+
+      return { error: null };
+    } catch (error) {
+      console.error('Unexpected error during signup:', error);
+      return { error: { message: 'An unexpected error occurred' } };
+    }
   };
 
   const signOut = async () => {
@@ -171,7 +213,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }

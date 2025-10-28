@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -9,25 +9,57 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export interface Database {
   public: {
     Tables: {
+      tenants: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          settings: any;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          settings?: any;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          settings?: any;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       profiles: {
         Row: {
           id: string;
           email: string;
-          role: "customer" | "seller" | "admin";
+          role: 'customer' | 'seller' | 'admin';
+          tenant_id: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id: string;
           email: string;
-          role: "customer" | "seller" | "admin";
+          role: 'customer' | 'seller' | 'admin';
+          tenant_id: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
           id?: string;
           email?: string;
-          role?: "customer" | "seller" | "admin";
+          role?: 'customer' | 'seller' | 'admin';
+          tenant_id?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -182,13 +214,7 @@ export interface Database {
           seller_id: string;
           items: any;
           total_amount: number;
-          status:
-            | "pending"
-            | "confirmed"
-            | "preparing"
-            | "delivering"
-            | "completed"
-            | "cancelled";
+          status: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'completed' | 'cancelled';
           created_at: string;
           updated_at: string;
         };
@@ -198,13 +224,7 @@ export interface Database {
           seller_id: string;
           items: any;
           total_amount: number;
-          status?:
-            | "pending"
-            | "confirmed"
-            | "preparing"
-            | "delivering"
-            | "completed"
-            | "cancelled";
+          status?: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'completed' | 'cancelled';
           created_at?: string;
           updated_at?: string;
         };
@@ -214,13 +234,7 @@ export interface Database {
           seller_id?: string;
           items?: any;
           total_amount?: number;
-          status?:
-            | "pending"
-            | "confirmed"
-            | "preparing"
-            | "delivering"
-            | "completed"
-            | "cancelled";
+          status?: 'pending' | 'confirmed' | 'preparing' | 'delivering' | 'completed' | 'cancelled';
           created_at?: string;
           updated_at?: string;
         };
@@ -260,7 +274,3 @@ export interface Database {
     };
   };
 }
-
-
-
-
