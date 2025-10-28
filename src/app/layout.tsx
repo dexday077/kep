@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     locale: 'tr_TR',
     images: [
       {
-        url: '/logo/kep_marketplace_logo.png',
+        url: '/logo/kep_marketplace_logo.svg',
         width: 1200,
         height: 630,
         alt: 'Kep Marketplace Logo',
@@ -45,11 +45,11 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "Kep Marketplace - Avsallar'ın Dijital Çarşısı",
     description: 'Yerel esnaftan online alışveriş, komşundan sipariş!',
-    images: ['/logo/kep_marketplace_logo.png'],
+    images: ['/logo/kep_marketplace_logo.svg'],
   },
   icons: {
-    icon: '/logo/kep_marketplace_logo.png',
-    apple: '/logo/kep_marketplace_logo.png',
+    icon: '/logo/kep_marketplace_logo.svg',
+    apple: '/logo/kep_marketplace_logo.svg',
   },
 };
 

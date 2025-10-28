@@ -8,7 +8,7 @@ export default function Footer() {
         {/* Logo Section */}
         <div className="mb-12">
           <Link href="/" className="inline-block">
-            <Image src="/logo/kep_marketplace_logo.png" alt="Kep Marketplace" width={220} height={70} className="h-16 sm:h-18 w-auto" />
+            <Image src="/logo/kep_marketplace_logo.svg" alt="Kep Marketplace" width={220} height={70} className="h-16 sm:h-18 w-auto" />
           </Link>
           <p className="mt-4 text-base text-gray-600 max-w-lg font-medium">Avsallar&apos;ın dijital çarşısı. Yerel esnaftan online alışveriş, komşundan sipariş!</p>
         </div>

@@ -59,7 +59,7 @@ export default function MultiTenantTest() {
           message: `Error accessing profiles: ${profilesError.message}`,
         });
       } else {
-        const profilesWithTenant = profilesData?.filter((p) => p.tenant_id) || [];
+        const profilesWithTenant = profilesData?.filter((p: { tenant_id?: string }) => p.tenant_id) || [];
         results.push({
           test: 'Profiles with Tenant ID',
           status: profilesWithTenant.length > 0 ? 'success' : 'warning',
@@ -78,7 +78,7 @@ export default function MultiTenantTest() {
           message: `Error accessing products: ${productsError.message}`,
         });
       } else {
-        const productsWithTenant = productsData?.filter((p) => p.tenant_id) || [];
+        const productsWithTenant = productsData?.filter((p: { tenant_id?: string }) => p.tenant_id) || [];
         results.push({
           test: 'Products with Tenant ID',
           status: productsWithTenant.length > 0 ? 'success' : 'warning',
@@ -159,8 +159,8 @@ export default function MultiTenantTest() {
               message: `Error testing RLS: ${allProfilesError.message}`,
             });
           } else {
-            const userTenant = allProfiles?.find((p) => p.id === user.id)?.tenant_id;
-            const otherTenants = allProfiles?.filter((p) => p.tenant_id !== userTenant) || [];
+            const userTenant = allProfiles?.find((p: { id: string; tenant_id?: string }) => p.id === user.id)?.tenant_id;
+            const otherTenants = allProfiles?.filter((p: { tenant_id?: string }) => p.tenant_id !== userTenant) || [];
 
             results.push({
               test: 'RLS Tenant Isolation',
@@ -318,4 +318,3 @@ export default function MultiTenantTest() {
     </div>
   );
 }
-

@@ -32,7 +32,7 @@ export default function Navbar() {
               İndirim Kuponlarım
             </Link>
             <Link href="/seller/register" className="hover:text-orange-600 transition-colors">
-              Kep'te Satış Yap
+              Kep&apos;te Satış Yap
             </Link>
             <Link href="/about" className="hover:text-orange-600 transition-colors">
               Hakkımızda

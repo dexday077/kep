@@ -127,26 +127,47 @@ export default function RegisterPage() {
             <p className="text-sm text-gray-500">Giriş sayfasına yönlendiriliyorsunuz...</p>
           </div>
         </div>
-        
+
         <style jsx>{`
           @keyframes bounce-slow {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            0%,
+            100% {
+              transform: translateY(0);
+            }
+            50% {
+              transform: translateY(-10px);
+            }
           }
-          
+
           @keyframes progress {
-            0% { width: 0%; }
-            100% { width: 100%; }
+            0% {
+              width: 0%;
+            }
+            100% {
+              width: 100%;
+            }
           }
-          
+
           @keyframes fade-in-up {
-            0% { opacity: 0; transform: translateY(20px); }
-            100% { opacity: 1; transform: translateY(0); }
+            0% {
+              opacity: 0;
+              transform: translateY(20px);
+            }
+            100% {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
-          
-          .animate-bounce-slow { animation: bounce-slow 2s ease-in-out infinite; }
-          .animate-progress { animation: progress 2s ease-in-out; }
-          .animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
+
+          .animate-bounce-slow {
+            animation: bounce-slow 2s ease-in-out infinite;
+          }
+          .animate-progress {
+            animation: progress 2s ease-in-out;
+          }
+          .animate-fade-in-up {
+            animation: fade-in-up 0.6s ease-out;
+          }
         `}</style>
       </div>
     );
@@ -158,10 +179,10 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-block mb-6">
-            <Image src="/logo/kep_marketplace_logo.png" alt="Kep Marketplace" width={200} height={60} className="mx-auto" />
+            <Image src="/logo/kep_marketplace_logo.svg" alt="Kep Marketplace" width={200} height={60} className="mx-auto" />
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Kep Marketplace'e Hoş Geldiniz</h1>
-          <p className="text-gray-600">Avsallar'ın dijital çarşısında yerinizi alın</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Kep Marketplace&apos;e Hoş Geldiniz</h1>
+          <p className="text-gray-600">Avsallar&apos;ın dijital çarşısında yerinizi alın</p>
         </div>
 
         {/* Registration Form */}
@@ -482,58 +503,7 @@ export default function RegisterPage() {
             <p className="text-xs text-gray-500">Yemek siparişi ve restoran hizmetleri</p>
           </div>
         </div>
-        </div>
       </div>
-
-      <style jsx>{`
-        @keyframes blob {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(30px, -50px) scale(1.1); }
-          66% { transform: translate(-20px, 20px) scale(0.9); }
-        }
-
-        @keyframes fade-in-down {
-          0% { opacity: 0; transform: translateY(-20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fade-in-up {
-          0% { opacity: 0; transform: translateY(20px); }
-          100% { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fade-in {
-          0% { opacity: 0; }
-          100% { opacity: 1; }
-        }
-
-        @keyframes slide-in {
-          0% { opacity: 0; transform: translateX(20px); }
-          100% { opacity: 1; transform: translateX(0); }
-        }
-
-        @keyframes shake {
-          0%, 100% { transform: translateX(0); }
-          10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-          20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        .animate-blob { animation: blob 7s infinite; }
-        .animate-fade-in-down { animation: fade-in-down 0.6s ease-out; }
-        .animate-fade-in-up { animation: fade-in-up 0.6s ease-out; }
-        .animate-fade-in { animation: fade-in 0.6s ease-out; }
-        .animate-slide-in { animation: slide-in 0.5s ease-out; }
-        .animate-shake { animation: shake 0.5s ease-in-out; }
-
-        .animation-delay-700 { animation-delay: 0.7s; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        .animation-delay-4000 { animation-delay: 4s; }
-
-        .bg-grid-slate-100 {
-          background-image: linear-gradient(to right, rgb(241 245 249) 1px, transparent 1px),
-            linear-gradient(to bottom, rgb(241 245 249) 1px, transparent 1px);
-        }
-      `}</style>
     </div>
   );
 }

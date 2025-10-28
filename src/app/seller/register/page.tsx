@@ -72,12 +72,12 @@ export default function SellerRegisterPage() {
             Ana Sayfa
           </Link>
           <span className="mx-2 text-gray-400">/</span>
-          <span className="text-sm text-gray-900 font-medium">Kep'te Satış Yap</span>
+          <span className="text-sm text-gray-900 font-medium">Kep&apos;te Satış Yap</span>
         </nav>
 
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Kep'te Satış Yap</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Kep&apos;te Satış Yap</h1>
             <p className="text-gray-600">Ürünlerinizi milyonlarca müşteriye ulaştırın ve dijital dünyada satış yapmaya başlayın.</p>
           </div>
 
