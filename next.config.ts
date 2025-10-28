@@ -26,6 +26,12 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    // Unsplash görselleri için hata toleransı
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // Image optimization hatalarını suppress et
+    unoptimized: false,
   },
 };
 

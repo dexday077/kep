@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseEnabled } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -32,9 +32,6 @@ const mockUsers: Record<string, { email: string; password: string; role: 'custom
   },
 };
 
-// Check if Supabase is enabled
-const isSupabaseEnabled = !!process.env.NEXT_PUBLIC_SUPABASE_URL && !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -42,7 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userRole, setUserRole] = useState<'customer' | 'seller' | 'admin' | null>(null);
 
   useEffect(() => {
-    if (!isSupabaseEnabled) {
+    if (!isSupabaseEnabled || !supabase) {
       // Mock mode - check localStorage
       const mockSession = localStorage.getItem('mockSession');
       if (mockSession) {
@@ -56,67 +53,88 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Supabase mode
     const getInitialSession = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      if (session?.user) {
-        await fetchUserRole(session.user.id);
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        }
+
+        setLoading(false);
+      } catch (error) {
+        console.error('Error getting session:', error);
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     getInitialSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
-      console.log('Auth state changed:', event);
+    let subscription: { unsubscribe: () => void } | null = null;
 
-      setSession(session);
-      setUser(session?.user ?? null);
+    try {
+      const {
+        data: { subscription: sub },
+      } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
+        console.log('Auth state changed:', event);
 
-      if (session?.user) {
-        await fetchUserRole(session.user.id);
-      } else {
-        setUserRole(null);
-      }
+        setSession(session);
+        setUser(session?.user ?? null);
 
-      // Handle session expiry
-      if (event === 'SIGNED_OUT') {
-        setUserRole(null);
-      }
+        if (session?.user) {
+          await fetchUserRole(session.user.id);
+        } else {
+          setUserRole(null);
+        }
 
-      // Handle token refresh errors
-      if (event === 'TOKEN_REFRESHED') {
-        console.log('Token refreshed successfully');
-      }
+        // Handle session expiry
+        if (event === 'SIGNED_OUT') {
+          setUserRole(null);
+        }
 
-      setLoading(false);
-    });
+        // Handle token refresh errors
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        }
+
+        setLoading(false);
+      });
+
+      subscription = sub;
+    } catch (error) {
+      console.error('Error setting up auth state listener:', error);
+    }
 
     const checkSession = setInterval(async () => {
-      const {
-        data: { session },
-        error,
-      } = await supabase.auth.getSession();
+      if (!supabase) return;
 
-      if (error || !session) {
-        console.log('Session expired or invalid, logging out...');
-        await supabase.auth.signOut();
+      try {
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.getSession();
+
+        if (error || !session) {
+          console.log('Session expired or invalid, logging out...');
+          await supabase.auth.signOut();
+        }
+      } catch (error) {
+        console.error('Error checking session:', error);
       }
     }, 5 * 60 * 1000);
 
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe();
       clearInterval(checkSession);
     };
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    if (!supabase) return;
+
     try {
       const { data, error } = await supabase.from('profiles').select('role, tenant_id').eq('id', userId).single();
 
@@ -175,6 +193,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Supabase authentication
+    if (!supabase) {
+      return {
+        error: {
+          message: 'Supabase is not configured',
+        },
+      };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -183,6 +209,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userRole: 'customer' | 'seller', additionalData?: { fullName?: string; phone?: string; shopName?: string }) => {
+    if (!supabase) {
+      return {
+        error: {
+          message: 'Supabase is not configured',
+        },
+      };
+    }
+
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -256,7 +290,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!isSupabaseEnabled) {
+    if (!isSupabaseEnabled || !supabase) {
       // Mock sign out
       localStorage.removeItem('mockSession');
       setUser(null);

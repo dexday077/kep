@@ -59,7 +59,7 @@ export const getProductImage = (productId: string, width = 400, height = 400): s
     // Elektronik
     '1': 'photo-1505740420928-5e560c06d30e', // Kulaklık
     '4': 'photo-1527864550417-7fd91fc51a46', // Mouse
-    '5': 'photo-1591290619762-99f6d3c0b1d4', // Şarj adaptörü
+    '5': 'photo-1621905252501-b5c797ba8866', // Şarj adaptörü
     '6': 'photo-1590602847861-f357a9332bbc', // Mikrofon
     '7': 'photo-1587829741301-dc798b83add3', // Klavye
     '8': 'photo-1527864550417-7fd91fc51a46', // Laptop stand
@@ -88,7 +88,7 @@ export const getProductImage = (productId: string, width = 400, height = 400): s
 
     // Kozmetik
     '13': 'photo-1596462502278-27bfdc403348', // Kozmetik set
-    '22': 'photo-1583241800698-4ec168f5b47e', // Makyaj fırçası
+    '22': 'photo-1596462502278-27bfdc403348', // Makyaj fırçası
 
     // Oyuncak
     '14': 'photo-1558060370-d644479cb6f7', // Oyuncak
@@ -108,8 +108,8 @@ export const getProductImage = (productId: string, width = 400, height = 400): s
     return `https://images.unsplash.com/${imageId}?w=${width}&h=${height}&fit=crop&q=80`;
   }
 
-  // Fallback: Random görsel
-  return `https://source.unsplash.com/${width}x${height}/?product&sig=${productId}`;
+  // Fallback: Placeholder görsel
+  return `https://via.placeholder.com/${width}x${height}/FF7A00/FFFFFF?text=Product+${productId}`;
 };
 
 /**
@@ -117,7 +117,8 @@ export const getProductImage = (productId: string, width = 400, height = 400): s
  */
 export const getRestaurantImage = (restaurantName: string, width = 800, height = 600): string => {
   const seed = restaurantName.toLowerCase().replace(/\s+/g, '-');
-  return `https://source.unsplash.com/${width}x${height}/?turkish-restaurant,mediterranean-food&sig=${seed}`;
+  // Fallback to placeholder
+  return `https://via.placeholder.com/${width}x${height}/FF7A00/FFFFFF?text=Restaurant`;
 };
 
 /**
@@ -143,7 +144,8 @@ export const getBannerImage = (type: 'tour' | 'food' | 'shopping', width = 1200,
  */
 export const getBusinessProfileImage = (businessName: string, width = 200, height = 200): string => {
   const seed = businessName.toLowerCase().replace(/\s+/g, '-');
-  return `https://source.unsplash.com/${width}x${height}/?storefront,shop&sig=${seed}`;
+  // Fallback to placeholder
+  return `https://via.placeholder.com/${width}x${height}/FF7A00/FFFFFF?text=Shop`;
 };
 
 /**
@@ -185,11 +187,3 @@ export const getBlurDataURL = (width = 10, height = 10): string => {
     </svg>`,
   ).toString('base64')}`;
 };
-
-
-
-
-
-
-
-
