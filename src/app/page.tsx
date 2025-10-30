@@ -9,6 +9,7 @@ import { useSearch } from '@/context/SearchContext';
 import { getProductImage } from '@/lib/imageHelpers';
 import { useCartStore } from '@/store/cartStore';
 import { useToastContext } from '@/context/ToastContext';
+import { ApiService } from '@/lib/api';
 
 const demoProducts = [
   {
@@ -263,16 +264,7 @@ const demoProducts = [
   },
 ];
 
-const categories = [
-  { name: 'Restoranlar', image: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&h=100&fit=crop&q=80' },
-  { name: 'Market', image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=100&h=100&fit=crop&q=80' },
-  { name: 'Turlar', image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&h=100&fit=crop&q=80', subtitle: 'Aktiviteler' },
-  { name: 'Moda', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop&q=80' },
-  { name: 'Elektronik', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=100&h=100&fit=crop&q=80' },
-  { name: 'Ev & Bahçe', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&h=100&fit=crop&q=80' },
-  { name: 'Spor', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop&q=80' },
-  { name: 'Hediyelik', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=100&h=100&fit=crop&q=80' },
-];
+// Kategoriler artık Supabase'den çekilecek
 
 const heroSlides = [
   {
@@ -344,6 +336,10 @@ export default function HomePage() {
   const [isSearching, setIsSearching] = useState(false);
   const [filters, setFilters] = useState<{ sort: string; minPrice?: number; maxPrice?: number }>({ sort: 'popularity' });
 
+  // Supabase'den kategorileri çek
+  const [categories, setCategories] = useState<Array<{ name: string; slug: string; icon: string; image: string }>>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+
   const handleAddToCart = (product: (typeof demoProducts)[0]) => {
     addToCart(
       {
@@ -356,6 +352,39 @@ export default function HomePage() {
     );
     success('Ürün Sepete Eklendi!', `${product.title} sepetinize eklendi.`);
   };
+
+  // Kategorileri yükle
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setCategoriesLoading(true);
+        const categoriesData = await ApiService.getCategories();
+
+        // Kategorileri ana sayfa formatına dönüştür
+        const formattedCategories = categoriesData.map((cat: any) => ({
+          name: cat.name,
+          slug: cat.slug,
+          icon: cat.icon || '📦',
+          image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&q=80`, // Random placeholder image
+        }));
+
+        setCategories(formattedCategories);
+      } catch (error) {
+        console.error('Kategoriler yüklenirken hata:', error);
+        // Fallback kategoriler
+        setCategories([
+          { name: 'Elektronik', slug: 'elektronik', icon: '💻', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=100&h=100&fit=crop&q=80' },
+          { name: 'Moda', slug: 'moda', icon: '👔', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop&q=80' },
+          { name: 'Ev & Yaşam', slug: 'ev-yasam', icon: '🏠', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&h=100&fit=crop&q=80' },
+          { name: 'Spor', slug: 'spor', icon: '⚽', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop&q=80' },
+        ]);
+      } finally {
+        setCategoriesLoading(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   // Hero slider auto-play
   useEffect(() => {
@@ -398,9 +427,7 @@ export default function HomePage() {
     return list;
   }, [filters, searchQuery]);
 
-  const getCategorySlug = (categoryName: string) => {
-    return categoryName.toLowerCase().replace(/\s+/g, '-').replace('&', 've');
-  };
+  // getCategorySlug fonksiyonu artık gerekli değil, slug'ları direkt kullanıyoruz
 
   return (
     <div className="bg-gray-50 min-h-screen">
@@ -595,20 +622,48 @@ export default function HomePage() {
       <section className="bg-white shadow-lg border-b-4 border-orange-200 sticky top-16 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center py-8">
-            <div className="flex overflow-x-auto gap-6 scrollbar-hide">
-              {categories.map((category) => (
-                <Link key={category.name} href={`/category/${getCategorySlug(category.name)}`} className="flex-shrink-0 flex flex-col items-center gap-3 group">
+            {categoriesLoading ? (
+              <div className="flex gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="flex-shrink-0 flex flex-col items-center gap-3">
+                    <div className="w-16 h-16 rounded-full bg-gray-200 animate-pulse"></div>
+                    <div className="w-20 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex overflow-x-auto gap-6 scrollbar-hide">
+                {/* Tüm Kategoriler Linki */}
+                <Link href="/category/all" className="flex-shrink-0 flex flex-col items-center gap-3 group">
                   <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-cover bg-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110" style={{ backgroundImage: `url(${category.image})` }} />
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-red-500 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 flex items-center justify-center text-2xl">
+                      <span className="text-white drop-shadow-lg">📂</span>
+                    </div>
                     <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   </div>
                   <div className="text-center">
-                    <div className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors leading-tight">{category.name}</div>
-                    {category.subtitle && <div className="text-xs text-gray-500 group-hover:text-orange-500 transition-colors">{category.subtitle}</div>}
+                    <div className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors leading-tight">Tüm Kategoriler</div>
                   </div>
                 </Link>
-              ))}
-            </div>
+
+                {categories.map((category) => (
+                  <Link key={category.name} href={`/category/${category.slug}`} className="flex-shrink-0 flex flex-col items-center gap-3 group">
+                    <div className="relative">
+                      <div
+                        className="w-16 h-16 rounded-full bg-cover bg-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 flex items-center justify-center text-2xl"
+                        style={{ backgroundImage: `url(${category.image})` }}
+                      >
+                        <span className="text-white drop-shadow-lg">{category.icon}</span>
+                      </div>
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors leading-tight">{category.name}</div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </section>

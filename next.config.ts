@@ -3,6 +3,17 @@ import path from 'path';
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
+  // Turbopack konfigürasyonu (Next.js 15.5.3'te yeni format)
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
+      },
+    },
+  },
+  // Statik export için gerekli ayar
+  // output: 'export', // Bu satırı aktif etmek için uncomment edin
   images: {
     remotePatterns: [
       {
@@ -30,7 +41,8 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // Image optimization hatalarını suppress et
+    // Statik export için image optimization'ı kapatmak gerekebilir
+    // unoptimized: true, // Statik export için bu satırı aktif edin
     unoptimized: false,
   },
 };
