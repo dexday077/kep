@@ -4,11 +4,11 @@ import path from 'path';
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
   
-  // KVM sunucusu için optimizasyonlar
-  experimental: {
-    // Server-side rendering optimizasyonu
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
-  },
+  // Standalone output for optimized production builds
+  output: 'standalone',
+  
+  // Server-side rendering optimizasyonu (Next.js 16+ için güncellendi)
+  serverExternalPackages: ['@supabase/supabase-js'],
   
   // Turbopack konfigürasyonu
   turbopack: {
@@ -21,7 +21,6 @@ const nextConfig: NextConfig = {
   },
   
   // KVM sunucusu için performans ayarları
-  swcMinify: true,
   compress: true,
   
   // Image optimization
@@ -58,14 +57,6 @@ const nextConfig: NextConfig = {
   // KVM sunucusu için güvenlik ayarları
   poweredByHeader: false,
   generateEtags: false,
-  
-  // API routes için timeout ayarları
-  api: {
-    responseLimit: false,
-    bodyParser: {
-      sizeLimit: '1mb',
-    },
-  },
 };
 
 export default nextConfig;
