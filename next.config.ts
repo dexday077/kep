@@ -3,7 +3,14 @@ import path from 'path';
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
-  // Turbopack konfigürasyonu (Next.js 15.5.3'te yeni format)
+  
+  // KVM sunucusu için optimizasyonlar
+  experimental: {
+    // Server-side rendering optimizasyonu
+    serverComponentsExternalPackages: ['@supabase/supabase-js'],
+  },
+  
+  // Turbopack konfigürasyonu
   turbopack: {
     rules: {
       '*.svg': {
@@ -12,8 +19,12 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  // Statik export için gerekli ayar
-  // output: 'export', // Bu satırı aktif etmek için uncomment edin
+  
+  // KVM sunucusu için performans ayarları
+  swcMinify: true,
+  compress: true,
+  
+  // Image optimization
   images: {
     remotePatterns: [
       {
@@ -41,9 +52,19 @@ const nextConfig: NextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // Statik export için image optimization'ı kapatmak gerekebilir
-    // unoptimized: true, // Statik export için bu satırı aktif edin
     unoptimized: false,
+  },
+  
+  // KVM sunucusu için güvenlik ayarları
+  poweredByHeader: false,
+  generateEtags: false,
+  
+  // API routes için timeout ayarları
+  api: {
+    responseLimit: false,
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
   },
 };
 

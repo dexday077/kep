@@ -1,96 +1,216 @@
 import { supabase } from './supabase';
 
+// Type definitions
+interface DatabaseError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
+}
+
+interface Product {
+  id: string;
+  title: string;
+  description?: string;
+  price: number;
+  original_price?: number;
+  category?: string;
+  image?: string;
+  images?: string[];
+  stock?: number;
+  rating?: number;
+  seller_id?: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  profiles?: {
+    full_name?: string;
+    shop_name?: string;
+  };
+  categories?: {
+    name?: string;
+    slug?: string;
+  };
+}
+
+// Type definitions for API responses
+interface Profile {
+  id: string;
+  full_name?: string;
+  shop_name?: string;
+  avatar_url?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+interface Review {
+  id: string;
+  customer_id: string;
+  product_id?: string;
+  restaurant_id?: string;
+  rating: number;
+  comment?: string;
+  created_at: string;
+  profiles?: Profile;
+}
+
+interface ShippingAddress {
+  id: string;
+  customer_id: string;
+  title: string;
+  full_name?: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  postal_code?: string;
+  address_data?: unknown;
+  is_default?: boolean;
+  is_active?: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // API Service for Supabase Backend Integration
 export class ApiService {
   // Products API
   static async getProducts(filters?: { category?: string; minPrice?: number; maxPrice?: number; search?: string; sort?: string; limit?: number; offset?: number }) {
-    let query = supabase
-      .from('products')
-      .select(
-        `
-        *,
-        profiles!products_seller_id_fkey(full_name, shop_name),
-        categories(name, slug)
-      `,
-      )
-      .eq('is_active', true);
-
-    if (filters?.category) {
-      query = query.eq('category', filters.category);
-    }
-
-    if (filters?.minPrice) {
-      query = query.gte('price', filters.minPrice);
-    }
-
-    if (filters?.maxPrice) {
-      query = query.lte('price', filters.maxPrice);
-    }
-
-    if (filters?.search) {
-      query = query.ilike('title', `%${filters.search}%`);
-    }
-
-    if (filters?.sort) {
-      switch (filters.sort) {
-        case 'priceAsc':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'priceDesc':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'popularity':
-          query = query.order('rating', { ascending: false });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
+    try {
+      // Supabase bağlantısını kontrol et
+      if (!supabase) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase not initialized, returning empty products');
+        }
+        return { data: [], count: 0 };
       }
-    } else {
-      query = query.order('created_at', { ascending: false });
+
+      let query = supabase
+        .from('products')
+        .select(
+          `
+          *,
+          profiles!products_seller_id_fkey(full_name, shop_name),
+          categories(name, slug)
+        `,
+        )
+        .eq('is_active', true);
+
+      if (filters?.category) {
+        query = query.eq('category', filters.category);
+      }
+
+      if (filters?.minPrice) {
+        query = query.gte('price', filters.minPrice);
+      }
+
+      if (filters?.maxPrice) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      if (filters?.search) {
+        query = query.ilike('title', `%${filters.search}%`);
+      }
+
+      if (filters?.sort) {
+        switch (filters.sort) {
+          case 'priceAsc':
+            query = query.order('price', { ascending: true });
+            break;
+          case 'priceDesc':
+            query = query.order('price', { ascending: false });
+            break;
+          case 'popularity':
+            query = query.order('rating', { ascending: false });
+            break;
+          default:
+            query = query.order('created_at', { ascending: false });
+        }
+      } else {
+        query = query.order('created_at', { ascending: false });
+      }
+
+      if (filters?.limit) {
+        query = query.limit(filters.limit);
+      }
+
+      if (filters?.offset) {
+        query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) {
+        // If table doesn't exist, return empty array
+        if (error.code === 'PGRST116' || error.message?.includes('does not exist')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Products table does not exist yet:', error.message);
+          }
+          return { data: [], count: 0 };
+        }
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase products error:', error);
+        }
+        return { data: [], count: 0 };
+      }
+
+      return { data: data || [], count: count || 0 };
+    } catch (error: unknown) {
+      // For any error, return empty array instead of throwing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Products API error:', error);
+      }
+      return { data: [], count: 0 };
     }
-
-    if (filters?.limit) {
-      query = query.limit(filters.limit);
-    }
-
-    if (filters?.offset) {
-      query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) throw error;
-
-    return { data, count };
   }
 
   static async getProduct(id: string) {
-    const { data, error } = await supabase
-      .from('products')
-      .select(
-        `
-        *,
-        profiles!products_seller_id_fkey(full_name, shop_name),
-        categories(name, slug),
-        reviews(rating, comment, created_at, profiles!reviews_customer_id_fkey(full_name))
-      `,
-      )
-      .eq('id', id)
-      .eq('is_active', true)
-      .single();
+    try {
+      // Supabase bağlantısını kontrol et
+      if (!supabase) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase not initialized, returning null product');
+        }
+        return null;
+      }
 
-    if (error) throw error;
-    return data;
+      const { data, error } = await supabase
+        .from('products')
+        .select(
+          `
+          *,
+          profiles!products_seller_id_fkey(full_name, shop_name),
+          categories(name, slug),
+          reviews(rating, comment, created_at, profiles!reviews_customer_id_fkey(full_name))
+        `,
+        )
+        .eq('id', id)
+        .eq('is_active', true)
+        .single();
+
+      if (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase product error:', error);
+        }
+        return null;
+      }
+      return data;
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Product API error:', error);
+      }
+      return null;
+    }
   }
 
-  static async createProduct(productData: { title: string; description?: string; price: number; original_price?: number; category: string; image?: string; images?: string[]; stock: number; seller_id: string }) {
+  static async createProduct(productData: Omit<Product, 'id' | 'created_at' | 'updated_at'>) {
     const { data, error } = await supabase.from('products').insert([productData]).select().single();
 
     if (error) throw error;
     return data;
   }
 
-  static async updateProduct(id: string, updates: any) {
+  static async updateProduct(id: string, updates: Partial<Product>) {
     const { data, error } = await supabase.from('products').update(updates).eq('id', id).select().single();
 
     if (error) throw error;
@@ -105,10 +225,38 @@ export class ApiService {
 
   // Categories API
   static async getCategories() {
-    const { data, error } = await supabase.from('categories').select('*').eq('is_active', true).order('name');
+    try {
+      // Supabase bağlantısını kontrol et
+      if (!supabase) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase not initialized, returning empty categories');
+        }
+        return [];
+      }
 
-    if (error) throw error;
-    return data;
+      const { data, error } = await supabase.from('categories').select('*').eq('is_active', true).order('name');
+
+      if (error) {
+        // If table doesn't exist, return empty array
+        if (error.code === 'PGRST116' || error.message?.includes('does not exist')) {
+          if (process.env.NODE_ENV === 'development') {
+            console.warn('Categories table does not exist yet:', error.message);
+          }
+          return [];
+        }
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase categories error:', error);
+        }
+        return [];
+      }
+      return data || [];
+    } catch (error: unknown) {
+      // For any error, return empty array instead of throwing
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Categories API error:', error);
+      }
+      return [];
+    }
   }
 
   // Profile API
@@ -119,7 +267,7 @@ export class ApiService {
     return { data };
   }
 
-  static async updateProfile(userId: string, updates: any) {
+  static async updateProfile(userId: string, updates: Partial<Profile>) {
     const { data, error } = await supabase.from('profiles').update(updates).eq('id', userId).select().single();
 
     if (error) throw error;
@@ -127,7 +275,7 @@ export class ApiService {
   }
 
   // Orders API
-  static async createOrder(orderData: { customer_id: string; seller_id: string; items: any[]; total_amount: number; delivery_address: string; notes?: string }) {
+  static async createOrder(orderData: { customer_id: string; seller_id: string; items: unknown[]; total_amount: number; delivery_address: string; notes?: string }) {
     // Use Edge Function for order processing
     const { data, error } = await supabase.functions.invoke('process-order', {
       body: { orderData },
@@ -153,17 +301,16 @@ export class ApiService {
       if (error) {
         // If table doesn't exist, return empty array
         if (error.code === 'PGRST116' || error.message?.includes('does not exist')) {
-          console.warn('Orders table does not exist yet:', error.message);
           return [];
         }
         throw error;
       }
 
       return data || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       // For missing table errors, return empty array
-      if (error?.code === 'PGRST116' || error?.message?.includes('does not exist')) {
-        console.warn('Orders table not available');
+      const dbError = error as DatabaseError;
+      if (dbError?.code === 'PGRST116' || dbError?.message?.includes('does not exist')) {
         return [];
       }
       throw error;
@@ -178,7 +325,7 @@ export class ApiService {
   }
 
   // Reviews API
-  static async createReview(reviewData: { customer_id: string; product_id?: string; restaurant_id?: string; rating: number; comment?: string }) {
+  static async createReview(reviewData: Omit<Review, 'id' | 'created_at'>) {
     const { data, error } = await supabase.from('reviews').insert([reviewData]).select().single();
 
     if (error) throw error;
@@ -186,28 +333,48 @@ export class ApiService {
   }
 
   static async getReviews(productId?: string, restaurantId?: string) {
-    let query = supabase
-      .from('reviews')
-      .select(
-        `
-        *,
-        profiles!reviews_customer_id_fkey(full_name, avatar_url)
-      `,
-      )
-      .order('created_at', { ascending: false });
+    try {
+      // Supabase bağlantısını kontrol et
+      if (!supabase) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase not initialized, returning empty reviews');
+        }
+        return [];
+      }
 
-    if (productId) {
-      query = query.eq('product_id', productId);
+      let query = supabase
+        .from('reviews')
+        .select(
+          `
+          *,
+          profiles!reviews_customer_id_fkey(full_name, avatar_url)
+        `,
+        )
+        .order('created_at', { ascending: false });
+
+      if (productId) {
+        query = query.eq('product_id', productId);
+      }
+
+      if (restaurantId) {
+        query = query.eq('restaurant_id', restaurantId);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Supabase reviews error:', error);
+        }
+        return [];
+      }
+      return data || [];
+    } catch (error: unknown) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn('Reviews API error:', error);
+      }
+      return [];
     }
-
-    if (restaurantId) {
-      query = query.eq('restaurant_id', restaurantId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return data;
   }
 
   // Analytics API
@@ -221,7 +388,7 @@ export class ApiService {
   }
 
   // Notifications API
-  static async sendNotification(notificationData: { type: 'email' | 'push' | 'sms'; recipient_id: string; title: string; message: string; data?: any }) {
+  static async sendNotification(notificationData: { type: 'email' | 'push' | 'sms'; recipient_id: string; title: string; message: string; data?: unknown }) {
     const { data, error } = await supabase.functions.invoke('send-notification', {
       body: notificationData,
     });
@@ -341,7 +508,7 @@ export class ApiService {
     return data;
   }
 
-  static async addPaymentMethod(customerId: string, provider: string, methodId: string, type: string, details: any) {
+  static async addPaymentMethod(customerId: string, provider: string, methodId: string, type: string, details: unknown) {
     const { data, error } = await supabase.rpc('add_payment_method', {
       customer_uuid: customerId,
       provider_name: provider,
@@ -420,36 +587,35 @@ export class ApiService {
         // Check if it's a missing table error - this is acceptable for new setups
         if (error.code === 'PGRST116' || error.message?.includes('does not exist')) {
           // Return empty array for missing table instead of throwing
-          console.warn('Shipping addresses table does not exist yet:', error.message);
           return [];
         }
 
         // For other errors, preserve full error object
-        const enhancedError: any = new Error(error.message || 'Failed to get shipping addresses');
-        enhancedError.error = error;
+        const enhancedError = new Error(error.message || 'Failed to get shipping addresses') as Error & DatabaseError;
         enhancedError.details = error.details;
         enhancedError.hint = error.hint;
         enhancedError.code = error.code;
         throw enhancedError;
       }
       return data || [];
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's already an enhanced error, re-throw it
-      if (error?.error && error.code !== 'PGRST116') throw error;
+      const dbError = error as Error & { error?: unknown; code?: string };
+      if (dbError?.error && dbError.code !== 'PGRST116') throw error;
 
       // For missing table errors, return empty array
-      if (error?.code === 'PGRST116' || error?.message?.includes('does not exist')) {
+      if (dbError?.code === 'PGRST116' || (error as Error)?.message?.includes('does not exist')) {
         return [];
       }
 
       // Otherwise, create a proper error object
-      const enhancedError: any = new Error(error?.message || 'Failed to get shipping addresses');
+      const enhancedError = new Error((error as Error)?.message || 'Failed to get shipping addresses') as Error & { originalError: unknown };
       enhancedError.originalError = error;
       throw enhancedError;
     }
   }
 
-  static async addShippingAddress(customerId: string, title: string, addressData: any) {
+  static async addShippingAddress(customerId: string, title: string, addressData: unknown) {
     try {
       // Use RPC function to add shipping address
       const { data, error } = await supabase.rpc('add_shipping_address', {
@@ -459,8 +625,7 @@ export class ApiService {
       });
 
       if (error) {
-        const enhancedError: any = new Error(error.message || 'Failed to add shipping address');
-        enhancedError.error = error;
+        const enhancedError = new Error(error.message || 'Failed to add shipping address') as Error & DatabaseError;
         enhancedError.details = error.details;
         enhancedError.hint = error.hint;
         enhancedError.code = error.code;
@@ -473,18 +638,19 @@ export class ApiService {
       }
 
       return data;
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If it's already an enhanced error, re-throw it
-      if (error?.error) throw error;
+      const dbError = error as Error & { error?: unknown };
+      if (dbError?.error) throw error;
 
       // Otherwise, create a proper error object
-      const enhancedError: any = new Error(error?.message || 'Failed to add shipping address');
+      const enhancedError = new Error((error as Error)?.message || 'Failed to add shipping address') as Error & { originalError: unknown };
       enhancedError.originalError = error;
       throw enhancedError;
     }
   }
 
-  static async updateShippingAddress(addressId: string, updates: any) {
+  static async updateShippingAddress(addressId: string, updates: Partial<ShippingAddress>) {
     const { data, error } = await supabase.from('shipping_addresses').update(updates).eq('id', addressId).select().single();
 
     if (error) throw error;
@@ -544,8 +710,9 @@ export class ApiService {
         throw error;
       }
       return data || [];
-    } catch (error: any) {
-      if (error?.code === 'PGRST116') return [];
+    } catch (error: unknown) {
+      const dbError = error as DatabaseError;
+      if (dbError?.code === 'PGRST116') return [];
       throw error;
     }
   }
@@ -595,7 +762,7 @@ export class ApiService {
     const fileName = `${Date.now()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    const { data, error } = await supabase.storage.from(bucket).upload(filePath, file);
+    const { error } = await supabase.storage.from(bucket).upload(filePath, file);
 
     if (error) throw error;
 

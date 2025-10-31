@@ -1,4 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kep Marketplace
+
+Modern e-ticaret platformu - Next.js, Supabase ve TypeScript ile geliştirilmiştir.
+
+## 🚀 Özellikler
+
+- **Ürün Yönetimi**: Kategoriler, arama, filtreleme
+- **Sepet Sistemi**: Guest ve kullanıcı sepetleri
+- **Ödeme Sistemi**: Çoklu ödeme yöntemleri
+- **Kullanıcı Yönetimi**: Kayıt, giriş, profil
+- **Admin Paneli**: Ürün ve sipariş yönetimi
+- **Responsive Tasarım**: Mobil uyumlu arayüz
+
+## 🛠️ Teknolojiler
+
+- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **State Management**: Zustand
+- **UI Components**: Custom components
+
+## 📁 Proje Yapısı
+
+```
+src/
+├── app/                 # Next.js App Router sayfaları
+├── components/          # React bileşenleri
+├── context/            # React Context'ler
+├── lib/                # Utility fonksiyonları
+└── store/              # Zustand store'ları
+```
+
+## 🗄️ Veritabanı
+
+Bu proje Supabase PostgreSQL veritabanı kullanır. Veritabanı yapısı:
+
+- **products** - Ürünler tablosu
+- **categories** - Kategoriler tablosu
+- **carts** - Sepet sistemi
+- **profiles** - Kullanıcı profilleri
+- **orders** - Siparişler
+
+### Veritabanı Kurulumu:
+
+1. Supabase projesi oluşturun
+2. Gerekli tabloları oluşturun (products, categories, carts, profiles)
+3. RLS (Row Level Security) politikalarını aktif edin
+4. Environment variables'ları ayarlayın
 
 ## Getting Started
 

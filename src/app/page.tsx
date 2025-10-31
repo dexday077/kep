@@ -361,12 +361,14 @@ export default function HomePage() {
         const categoriesData = await ApiService.getCategories();
 
         // Kategorileri ana sayfa formatına dönüştür
-        const formattedCategories = categoriesData.map((cat: any) => ({
-          name: cat.name,
-          slug: cat.slug,
-          icon: cat.icon || '📦',
-          image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&q=80`, // Random placeholder image
-        }));
+        const formattedCategories = Array.isArray(categoriesData) 
+          ? categoriesData.map((cat: any) => ({
+              name: cat.name,
+              slug: cat.slug,
+              icon: cat.icon || '📦',
+              image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&q=80`, // Random placeholder image
+            }))
+          : [];
 
         setCategories(formattedCategories);
       } catch (error) {

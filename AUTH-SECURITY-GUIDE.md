@@ -117,3 +117,4 @@ Ayarları yaptıktan sonra:
 
 
 
+
