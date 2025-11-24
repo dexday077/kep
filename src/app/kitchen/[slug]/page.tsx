@@ -70,6 +70,13 @@ export default function RestaurantPage() {
         </div>
       </div>
 
+      {/* Demo Restaurant Warning */}
+      <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6 mx-4 sm:mx-6 lg:mx-8 mt-6 rounded-r-lg">
+        <p className="text-sm text-blue-800">
+          <strong>Bilgilendirme:</strong> Bu restoran sayfası demo amaçlıdır. Gerçek sipariş işlemi yapılmamaktadır.
+        </p>
+      </div>
+
       <section>
         <h2 className="text-lg font-medium mb-3 px-4 sm:px-6 lg:px-8 pt-4">
           Menü

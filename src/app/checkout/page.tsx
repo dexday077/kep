@@ -337,6 +337,22 @@ export default function CheckoutPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Under Construction Warning - Checkout Specific */}
+        <div className="mb-6 bg-gradient-to-r from-red-600 via-orange-600 to-amber-500 text-white rounded-xl shadow-lg p-5 border-2 border-red-400">
+          <div className="flex items-start gap-4">
+            <svg className="w-6 h-6 flex-shrink-0 mt-0.5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg mb-2">⚠️ Ödeme Sistemi Henüz Aktif Değil</h3>
+              <p className="text-sm opacity-95 leading-relaxed">
+                Kep Marketplace şu anda geliştirme aşamasındadır. Ödeme entegrasyonları henüz tamamlanmadığı için gerçek sipariş işlemleri yapılamamaktadır.
+                Bu sayfa test amaçlıdır. Ödeme sistemlerimiz hazır olduğunda sizleri bilgilendireceğiz.
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <Link href="/cart" className="inline-flex items-center text-orange-600 hover:text-orange-700 mb-4">
@@ -747,29 +763,27 @@ export default function CheckoutPage() {
                   </div>
                 </div>
 
-                {/* Complete Order Button */}
-                <button
-                  onClick={handleCompleteOrder}
-                  disabled={isProcessing}
-                  className="w-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-lg flex items-center justify-center gap-2"
-                >
-                  {isProcessing ? (
-                    <>
-                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Sipariş Oluşturuluyor...
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Siparişi Onayla ve Tamamla
-                    </>
-                  )}
-                </button>
+                {/* Complete Order Button - Disabled During Development */}
+                <div className="space-y-3">
+                  <div className="bg-amber-50 border-2 border-amber-400 rounded-lg p-4 text-center">
+                    <p className="text-sm font-semibold text-amber-800">
+                      ⚠️ Ödeme sistemi henüz aktif değildir. Gerçek sipariş işlemleri şu anda yapılamamaktadır.
+                    </p>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      showError('Ödeme sistemi henüz aktif değildir. Lütfen daha sonra tekrar deneyin.');
+                    }}
+                    disabled={true}
+                    className="w-full bg-gray-400 text-white py-4 px-6 rounded-xl text-lg font-semibold transition-all duration-300 disabled:opacity-60 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    Sipariş Sistemi Yakında Aktif Olacak
+                  </button>
+                </div>
               </div>
             )}
           </div>

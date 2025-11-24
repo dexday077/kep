@@ -3,12 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useCartStore } from "@/store/cartStore";
 import { useToastContext } from "@/context/ToastContext";
 import { useAuth } from "@/context/AuthContext";
 import { useParams } from "next/navigation";
 import { ProductDetailSkeleton } from "@/components/SkeletonLoader";
 import { ApiService } from "@/lib/api";
+import ProductCard from "@/components/ProductCard";
 
 type Product = {
   id: string;
@@ -34,6 +36,7 @@ type Product = {
 
 export default function ProductPage() {
   const params = useParams();
+  const router = useRouter();
   const id = String(params?.id ?? "");
   const { addToCart } = useCartStore();
   const { success, error: showError } = useToastContext();
@@ -45,6 +48,11 @@ export default function ProductPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<any[]>([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewComment, setReviewComment] = useState<string>("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const canDecrease = useMemo(() => quantity > 1, [quantity]);
   const canIncrease = useMemo(() => quantity < 10, [quantity]);
@@ -55,11 +63,31 @@ export default function ProductPage() {
       try {
         setIsLoading(true);
         const productData = await ApiService.getProduct(id);
-        setProduct(productData);
-        
-        // Load reviews
-        const reviewsData = await ApiService.getReviews(id);
-        setReviews(reviewsData || []);
+        if (productData) {
+          // Ensure id is string
+          const formattedProduct = {
+            ...productData,
+            id: String(productData.id || id),
+            image: productData.image_url || productData.image,
+            images: productData.images || (productData.image_url ? [productData.image_url] : []),
+          };
+          setProduct(formattedProduct);
+          
+          // Load reviews
+          const reviewsData = await ApiService.getReviews(String(formattedProduct.id));
+          setReviews(reviewsData || []);
+          
+          // Load similar products
+          if (formattedProduct.category || formattedProduct.categories?.slug) {
+            const similar = await ApiService.getProducts({
+              category: formattedProduct.category || formattedProduct.categories?.slug,
+              limit: 4,
+            });
+            // Filter out current product
+            const filtered = (similar.data || []).filter((p: any) => String(p.id) !== String(formattedProduct.id));
+            setSimilarProducts(filtered.slice(0, 4));
+          }
+        }
         
         // Check if favorite
         if (user) {
@@ -114,6 +142,64 @@ export default function ProductPage() {
       quantity
     );
     success('Ürün Sepete Eklendi!', `${product.title} sepetinize eklendi.`);
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    
+    // Add to cart first
+    addToCart(
+      {
+        id: product.id,
+        title: product.title,
+        price: product.price,
+        image: product.image || product.images?.[0] || '/placeholder.svg',
+      },
+      quantity
+    );
+    
+    // Navigate to checkout
+    router.push('/checkout');
+  };
+
+  const handleSubmitReview = async () => {
+    if (!user || !product) {
+      showError('Yorum yapmak için giriş yapmalısınız');
+      return;
+    }
+
+    if (!reviewComment.trim()) {
+      showError('Lütfen yorumunuzu yazın');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      // Convert product.id to string for API (Review interface expects string)
+      const productIdStr = String(product.id);
+      await ApiService.createReview({
+        customer_id: user.id,
+        product_id: productIdStr,
+        rating: reviewRating,
+        comment: reviewComment.trim(),
+      });
+
+      // Reload reviews
+      const reviewsData = await ApiService.getReviews(String(product.id));
+      setReviews(reviewsData || []);
+      
+      // Reset form
+      setReviewComment("");
+      setReviewRating(5);
+      setShowReviewForm(false);
+      
+      success('Başarılı', 'Yorumunuz başarıyla eklendi!');
+    } catch (err: any) {
+      console.error('Error submitting review:', err);
+      showError('Yorum eklenirken hata oluştu');
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   if (isLoading) {
@@ -296,6 +382,20 @@ export default function ProductPage() {
                 +
               </button>
             </div>
+
+            {/* Demo Product Warning */}
+            <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-amber-600 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div className="text-sm">
+                  <span className="font-semibold text-amber-800">Demo Ürün:</span>
+                  <span className="text-amber-700 ml-1">Bu ürün test amaçlıdır. Gerçek satış yapılmamaktadır.</span>
+                </div>
+              </div>
+            </div>
+
             <div className="flex gap-3">
               <button
                 onClick={handleAddToCart}
@@ -305,6 +405,7 @@ export default function ProductPage() {
                 {product.stock && product.stock > 0 ? 'Sepete Ekle' : 'Stokta Yok'}
               </button>
               <button 
+                onClick={handleBuyNow}
                 className="btn btn-ghost px-6"
                 disabled={!product.stock || product.stock <= 0}
               >
@@ -400,6 +501,18 @@ export default function ProductPage() {
               )}
               {tab === "reviews" && (
                 <div className="space-y-4">
+                  {/* Add Review Button - Show if user is logged in and form is not visible */}
+                  {user && !showReviewForm && (
+                    <div className="mb-4">
+                      <button 
+                        onClick={() => setShowReviewForm(true)}
+                        className="btn btn-primary text-sm"
+                      >
+                        Yorum Yap
+                      </button>
+                    </div>
+                  )}
+
                   {reviews.length > 0 ? (
                     reviews.map((review, index) => (
                       <div key={index} className="border-b border-gray-200 pb-4">
@@ -429,15 +542,72 @@ export default function ProductPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-center py-8">
-                      <p className="text-gray-500 mb-4">Henüz yorum yok. İlk yorumu sen yaz!</p>
-                      {user ? (
-                        <button className="btn btn-primary">
-                          Yorum Yap
+                    !showReviewForm && (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500 mb-4">Henüz yorum yok. İlk yorumu sen yaz!</p>
+                        {!user && (
+                          <p className="text-sm text-gray-400">Yorum yapmak için giriş yapmalısınız.</p>
+                        )}
+                      </div>
+                    )
+                  )}
+                  
+                  {/* Review Form */}
+                  {showReviewForm && user && (
+                    <div className="mt-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <h3 className="font-semibold text-sm mb-3">Yorumunuzu Yazın</h3>
+                      
+                      {/* Rating */}
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-700 mb-2">Değerlendirme:</p>
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() => setReviewRating(star)}
+                              className={`text-2xl ${
+                                star <= reviewRating
+                                  ? 'text-yellow-400'
+                                  : 'text-gray-300'
+                              } hover:scale-110 transition-transform`}
+                            >
+                              ⭐
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Comment */}
+                      <textarea
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Ürün hakkındaki düşüncelerinizi paylaşın..."
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                        rows={4}
+                      />
+                      
+                      {/* Actions */}
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={handleSubmitReview}
+                          disabled={isSubmittingReview || !reviewComment.trim()}
+                          className="btn btn-primary text-sm px-4 py-2"
+                        >
+                          {isSubmittingReview ? 'Gönderiliyor...' : 'Yorumu Gönder'}
                         </button>
-                      ) : (
-                        <p className="text-sm text-gray-400">Yorum yapmak için giriş yapmalısınız.</p>
-                      )}
+                        <button
+                          onClick={() => {
+                            setShowReviewForm(false);
+                            setReviewComment("");
+                            setReviewRating(5);
+                          }}
+                          className="btn btn-ghost text-sm px-4 py-2"
+                          disabled={isSubmittingReview}
+                        >
+                          İptal
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -446,6 +616,27 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+
+      {/* Similar Products Section */}
+      {similarProducts.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-2xl font-semibold text-slate-900 mb-6">Benzer Ürünler</h2>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+            {similarProducts.map((similarProduct) => (
+              <ProductCard
+                key={similarProduct.id}
+                product={{
+                  id: String(similarProduct.id),
+                  title: similarProduct.title,
+                  price: similarProduct.price,
+                  image: similarProduct.image_url || similarProduct.image || '/placeholder.svg',
+                  rating: similarProduct.rating,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

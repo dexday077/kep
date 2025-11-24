@@ -253,24 +253,6 @@ const demoProducts = [
   },
 ];
 
-const categories = {
-  elektronik: {
-    title: 'Elektronik',
-    subcategories: ['Bilgisayar & Tablet', 'Telefon & Aksesuar', 'TV & Görüntü', 'Beyaz Eşya', 'Küçük Ev Aletleri', 'Fotoğraf & Kamera', 'Oyun & Konsol', 'Kulaklık & Hoparlör'],
-    brands: ['Apple', 'Samsung', 'Sony', 'LG', 'Xiaomi', 'Huawei', 'Asus', 'MSI', 'Lenovo', 'HP', 'Dell'],
-  },
-  moda: {
-    title: 'Moda',
-    subcategories: ['Erkek Giyim', 'Kadın Giyim', 'Çocuk Giyim', 'Ayakkabı', 'Çanta & Aksesuar', 'Saat & Takı', 'Gözlük', 'İç Giyim'],
-    brands: ['Nike', 'Adidas', 'Zara', 'H&M', 'LC Waikiki', 'Koton', 'DeFacto', "Colin's", 'Mango', 'Pull & Bear'],
-  },
-  'ev-yasam': {
-    title: 'Ev & Yaşam',
-    subcategories: ['Mobilya', 'Ev Tekstili', 'Mutfak & Yemek', 'Banyo & Sağlık', 'Bahçe & Outdoor', 'Dekorasyon', 'Temizlik', 'Evcil Hayvan'],
-    brands: ['IKEA', 'Koçtaş', 'Tekzen', 'Bauhaus', 'Migros', 'CarrefourSA', 'A101', 'BIM', 'ŞOK', 'Happy Center'],
-  },
-};
-
 export default function CategoryPage() {
   const params = useParams();
   const slug = String(params?.slug ?? '');
@@ -287,14 +269,48 @@ export default function CategoryPage() {
   const [products, setProducts] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [productsLoading, setProductsLoading] = useState(true);
+  const [categoryProductsMap, setCategoryProductsMap] = useState<{ [key: number]: { products: any[], count: number } }>({});
+  const [categoryProductsLoading, setCategoryProductsLoading] = useState<{ [key: number]: boolean }>({});
 
-  // Kategorileri yükle
+  // Kategorileri yükle ve her kategori için ürün sayısını/örnekleri çek
   useEffect(() => {
     const loadCategories = async () => {
       try {
         setCategoriesLoading(true);
         const categoriesData = await ApiService.getCategories();
         setCategories(categoriesData);
+
+        // Her kategori için ürün sayısı ve örnek ürünleri çek
+        if (categoriesData && categoriesData.length > 0) {
+          const productsMap: { [key: number]: { products: any[], count: number } } = {};
+          const loadingMap: { [key: number]: boolean } = {};
+
+          // Tüm kategoriler için ürünleri paralel olarak yükle
+          const productPromises = categoriesData.map(async (cat: any) => {
+            loadingMap[cat.id] = true;
+            try {
+              // Kategori slug'ına göre ürünleri filtrele
+              const productsData = await ApiService.getProducts({
+                category: cat.slug,
+                limit: 4, // Her kategori için 4 örnek ürün
+              });
+              
+              productsMap[cat.id] = {
+                products: productsData.data || [],
+                count: productsData.count || 0,
+              };
+            } catch (error) {
+              console.error(`Kategori ${cat.name} için ürünler yüklenirken hata:`, error);
+              productsMap[cat.id] = { products: [], count: 0 };
+            } finally {
+              loadingMap[cat.id] = false;
+            }
+          });
+
+          await Promise.all(productPromises);
+          setCategoryProductsMap(productsMap);
+          setCategoryProductsLoading(loadingMap);
+        }
       } catch (error) {
         console.error('Kategoriler yüklenirken hata:', error);
       } finally {
@@ -326,7 +342,10 @@ export default function CategoryPage() {
     loadProducts();
   }, [slug]);
 
-  const category = slug === 'all' ? { title: 'Tüm Kategoriler', subcategories: [], brands: [] } : categories.find((cat) => cat.slug === slug);
+  // Kategori bilgisini veritabanından al veya "all" için özel objeyi oluştur
+  const category = slug === 'all' 
+    ? { title: 'Tüm Kategoriler', name: 'Tüm Kategoriler' } 
+    : categories.find((cat) => cat.slug === slug);
 
   // Simulate initial loading
   useEffect(() => {
@@ -396,19 +415,118 @@ export default function CategoryPage() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-              {categories.map((cat) => (
-                <Link key={cat.id} href={`/category/${cat.slug}`} className="bg-white rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow text-center group">
-                  <div
-                    className="w-16 h-16 rounded-full bg-cover bg-center mx-auto mb-4 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform"
-                    style={{ backgroundImage: `url(https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&q=80)` }}
-                  >
-                    <span className="text-white drop-shadow-lg">{cat.icon}</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 group-hover:text-orange-600 transition-colors">{cat.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{cat.description}</p>
-                </Link>
-              ))}
+            <div className="space-y-8">
+              {categories.length > 0 ? (
+                categories.map((cat) => {
+                  // Kategori için icon belirle (slug'a göre)
+                  const getCategoryIcon = (slug: string) => {
+                    const iconMap: { [key: string]: string } = {
+                      'elektronik': '💻',
+                      'moda': '👔',
+                      'ev-yasam': '🏠',
+                      'spor': '⚽',
+                      'kozmetik': '💄',
+                      'kadin': '👗',
+                      'erkek': '👔',
+                      'anne-cocuk': '👶',
+                      'supermarket': '🛒',
+                      'ayakkabi-canta': '👜',
+                    };
+                    return iconMap[slug.toLowerCase()] || '📦';
+                  };
+
+                  const categoryIcon = getCategoryIcon(cat.slug || '');
+                  const categoryImage = cat.image_url || null;
+                  const categoryProducts = categoryProductsMap[cat.id] || { products: [], count: 0 };
+                  const isLoadingCategoryProducts = categoryProductsLoading[cat.id] || false;
+                  
+                  return (
+                    <div key={cat.id} className="bg-white rounded-lg shadow-sm overflow-hidden">
+                      {/* Kategori Header */}
+                      <div className="p-6 border-b border-gray-100">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl flex-shrink-0 ${
+                                categoryImage 
+                                  ? 'bg-cover bg-center' 
+                                  : 'bg-gradient-to-br from-orange-500 to-red-500'
+                              }`}
+                              style={categoryImage ? { backgroundImage: `url(${categoryImage})` } : {}}
+                            >
+                              {!categoryImage && (
+                                <span className="text-white drop-shadow-lg">{categoryIcon}</span>
+                              )}
+                            </div>
+                            <div>
+                              <Link href={`/category/${cat.slug}`}>
+                                <h3 className="text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors">
+                                  {cat.name}
+                                </h3>
+                              </Link>
+                              {cat.description && (
+                                <p className="text-sm text-gray-500 mt-1">{cat.description}</p>
+                              )}
+                              <div className="mt-2 text-sm text-gray-600">
+                                <span className="font-semibold text-orange-600">{categoryProducts.count}</span>
+                                <span className="text-gray-500"> ürün</span>
+                              </div>
+                            </div>
+                          </div>
+                          <Link
+                            href={`/category/${cat.slug}`}
+                            className="px-4 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                          >
+                            Tümünü Gör →
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Kategori Ürünleri */}
+                      <div className="p-6">
+                        {isLoadingCategoryProducts ? (
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                              <ProductCardSkeleton key={i} />
+                            ))}
+                          </div>
+                        ) : categoryProducts.products.length > 0 ? (
+                          <>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                              {categoryProducts.products.map((product: any) => (
+                                <ProductCard key={product.id} product={product} />
+                              ))}
+                            </div>
+                            {categoryProducts.count > categoryProducts.products.length && (
+                              <div className="mt-4 text-center">
+                                <Link
+                                  href={`/category/${cat.slug}`}
+                                  className="inline-block px-6 py-2 text-sm font-semibold text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                >
+                                  {categoryProducts.count - categoryProducts.products.length} ürün daha göster
+                                </Link>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            <p className="text-sm">Bu kategoride henüz ürün bulunmuyor</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-6xl mb-4">📂</div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">Henüz kategori eklenmemiş</h3>
+                  <p className="text-gray-600 mb-4">Kategoriler yüklendiğinde burada görünecek</p>
+                  <Link href="/" className="text-orange-600 hover:text-orange-700 font-semibold">
+                    Ana sayfaya dön
+                  </Link>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -423,20 +541,14 @@ export default function CategoryPage() {
           {/* Left Sidebar */}
           <div className="w-64 flex-shrink-0">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-6">
-              {/* Category */}
+              {/* Category Info */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">Kategori</h3>
                 <div className="space-y-2">
-                  <div className="font-medium text-blue-600">{category.title}</div>
-                  {category.subcategories.map((sub: string) => (
-                    <button
-                      key={sub}
-                      onClick={() => setSelectedSubcategory(sub)}
-                      className={`block w-full text-left text-sm py-1 px-2 rounded transition-colors ${selectedSubcategory === sub ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                      {sub}
-                    </button>
-                  ))}
+                  <div className="font-medium text-blue-600">{category?.name || category?.title}</div>
+                  {category?.description && (
+                    <p className="text-sm text-gray-600">{category.description}</p>
+                  )}
                 </div>
               </div>
 
@@ -447,20 +559,6 @@ export default function CategoryPage() {
                   <input type="checkbox" checked={fastDelivery} onChange={(e) => setFastDelivery(e.target.checked)} className="mr-2" />
                   <span className="text-sm text-gray-600">Aynı gün teslimat</span>
                 </label>
-              </div>
-
-              {/* Brand */}
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Marka</h3>
-                <input type="text" placeholder="Filtrele" className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm mb-3" />
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {category.brands.map((brand: string) => (
-                    <label key={brand} className="flex items-center">
-                      <input type="checkbox" checked={selectedBrand === brand} onChange={(e) => setSelectedBrand(e.target.checked ? brand : null)} className="mr-2" />
-                      <span className="text-sm text-gray-600">{brand}</span>
-                    </label>
-                  ))}
-                </div>
               </div>
 
               {/* Advantageous Products */}
@@ -480,7 +578,7 @@ export default function CategoryPage() {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {category.title} ({filtered.length}+ ürün)
+                  {category?.name || category?.title} ({filtered.length}+ ürün)
                 </h1>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">Sırala:</span>

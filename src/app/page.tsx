@@ -5,11 +5,13 @@ import ProductCard from '@/components/ProductCard';
 import FiltersBar from '@/components/FiltersBar';
 import { ProductCardSkeleton } from '@/components/SkeletonLoader';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearch } from '@/context/SearchContext';
 import { getProductImage } from '@/lib/imageHelpers';
 import { useCartStore } from '@/store/cartStore';
 import { useToastContext } from '@/context/ToastContext';
 import { ApiService } from '@/lib/api';
+import { fetchUnsplashImage } from '@/lib/unsplash';
 
 const demoProducts = [
   {
@@ -266,12 +268,13 @@ const demoProducts = [
 
 // Kategoriler artık Supabase'den çekilecek
 
-const heroSlides = [
+const defaultHeroSlides = [
   {
     id: 1,
     title: 'Efsane Fırsatlar',
     subtitle: "Tüm kategorilerde %70'e varan indirimler",
-    image: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?w=800&h=320&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?w=1200&h=600&fit=crop&q=80',
+    unsplashQuery: 'shopping mall retail sale',
     buttonText: 'Hemen Keşfet',
     buttonLink: '/flash-sale',
   },
@@ -279,7 +282,8 @@ const heroSlides = [
     id: 2,
     title: 'Teknoloji Günleri',
     subtitle: 'En yeni teknoloji ürünleri burada',
-    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=800&h=320&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=600&fit=crop&q=80',
+    unsplashQuery: 'modern technology gadgets',
     buttonText: 'Ürünleri İncele',
     buttonLink: '/category/elektronik',
   },
@@ -287,18 +291,20 @@ const heroSlides = [
     id: 3,
     title: 'Kep Premium Avantajları',
     subtitle: 'Premium üyelik ile ek indirimler',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=320&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=600&fit=crop&q=80',
+    unsplashQuery: 'premium lifestyle membership',
     buttonText: 'Premium Ol',
     buttonLink: '/premium',
   },
 ];
 
-const quickLinks = [
+const defaultQuickLinks = [
   {
     id: 1,
     title: 'Fırsat Ürünleri',
     subtitle: 'Günlük fırsatlar',
-    image: 'https://images.unsplash.com/photo-1607082349566-187342175e2f?w=100&h=100&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1508921912186-1d1a45ebb3c1?w=600&h=600&fit=crop&q=80',
+    unsplashQuery: 'flash sale',
     link: '/flash-sale',
     color: 'from-red-500 to-pink-500',
   },
@@ -306,7 +312,8 @@ const quickLinks = [
     id: 2,
     title: 'KepPay ile Anında İndirim',
     subtitle: 'Ek %5 indirim',
-    image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=100&h=100&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=600&h=600&fit=crop&q=80',
+    unsplashQuery: 'digital payment phone',
     link: '/keppay',
     color: 'from-blue-500 to-cyan-500',
   },
@@ -314,7 +321,8 @@ const quickLinks = [
     id: 3,
     title: 'Premium Üyelik',
     subtitle: 'Özel avantajlar',
-    image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=100&h=100&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1483478550801-ceba5fe50e8e?w=600&h=600&fit=crop&q=80',
+    unsplashQuery: 'luxury lifestyle membership',
     link: '/premium',
     color: 'from-yellow-500 to-orange-500',
   },
@@ -322,11 +330,27 @@ const quickLinks = [
     id: 4,
     title: 'Hızlı Teslimat',
     subtitle: '30 dakikada kapıda',
-    image: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=100&h=100&fit=crop&q=80',
+    image: 'https://images.unsplash.com/photo-1523475472560-d2df97ec485c?w=600&h=600&fit=crop&q=80',
+    unsplashQuery: 'express delivery courier',
     link: '/delivery',
     color: 'from-green-500 to-emerald-500',
   },
 ];
+
+const inspirationQueries = [
+  { id: 'inspiration-1', query: 'local artisan crafts shop', fallback: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=800&h=600&fit=crop&q=80' },
+  { id: 'inspiration-2', query: 'fresh farmers market produce', fallback: 'https://images.unsplash.com/photo-1504754524776-8f4f37790ca0?w=800&h=600&fit=crop&q=80' },
+  { id: 'inspiration-3', query: 'modern electronics showcase', fallback: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&h=600&fit=crop&q=80' },
+  { id: 'inspiration-4', query: 'boutique fashion store interior', fallback: 'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=800&h=600&fit=crop&q=80' },
+  { id: 'inspiration-5', query: 'gourmet food presentation', fallback: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=800&h=600&fit=crop&q=80' },
+  { id: 'inspiration-6', query: 'cozy coffee shop counter', fallback: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&q=80' },
+];
+
+type ApiCategory = {
+  name: string;
+  slug: string;
+  icon?: string | null;
+};
 
 export default function HomePage() {
   const { searchQuery, setSearchQuery } = useSearch();
@@ -335,10 +359,57 @@ export default function HomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
   const [filters, setFilters] = useState<{ sort: string; minPrice?: number; maxPrice?: number }>({ sort: 'popularity' });
+  const [heroSlides, setHeroSlides] = useState(defaultHeroSlides);
+  const [quickLinks, setQuickLinks] = useState(defaultQuickLinks);
+  const [inspirationImages, setInspirationImages] = useState(inspirationQueries.map((item) => ({ id: item.id, url: item.fallback, alt: item.query })));
 
   // Supabase'den kategorileri çek
   const [categories, setCategories] = useState<Array<{ name: string; slug: string; icon: string; image: string }>>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadVisuals = async () => {
+      try {
+        const updatedSlides = await Promise.all(
+          defaultHeroSlides.map(async (slide) => ({
+            ...slide,
+            image: await fetchUnsplashImage(slide.unsplashQuery, slide.image),
+          })),
+        );
+
+        const updatedQuickLinks = await Promise.all(
+          defaultQuickLinks.map(async (link) => ({
+            ...link,
+            image: await fetchUnsplashImage(link.unsplashQuery, link.image, 'squarish'),
+          })),
+        );
+
+        const inspiration = await Promise.all(
+          inspirationQueries.map(async (item) => ({
+            id: item.id,
+            url: await fetchUnsplashImage(item.query, item.fallback),
+            alt: item.query,
+          })),
+        );
+
+        if (active) {
+          setHeroSlides(updatedSlides);
+          setQuickLinks(updatedQuickLinks);
+          setInspirationImages(inspiration);
+        }
+      } catch (error) {
+        console.warn('Unsplash visuals yüklenemedi:', error);
+      }
+    };
+
+    loadVisuals();
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const handleAddToCart = (product: (typeof demoProducts)[0]) => {
     addToCart(
@@ -361,13 +432,26 @@ export default function HomePage() {
         const categoriesData = await ApiService.getCategories();
 
         // Kategorileri ana sayfa formatına dönüştür
-        const formattedCategories = Array.isArray(categoriesData) 
-          ? categoriesData.map((cat: any) => ({
-              name: cat.name,
-              slug: cat.slug,
-              icon: cat.icon || '📦',
-              image: `https://images.unsplash.com/photo-${Math.floor(Math.random() * 1000000000)}?w=100&h=100&fit=crop&q=80`, // Random placeholder image
-            }))
+        const formattedCategories = Array.isArray(categoriesData)
+          ? await Promise.all(
+              (categoriesData as ApiCategory[]).map(async (cat) => {
+                const fallback =
+                  cat.slug === 'elektronik'
+                    ? 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop&q=80'
+                    : cat.slug === 'moda'
+                    ? 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&q=80'
+                    : cat.slug === 'spor'
+                    ? 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&q=80'
+                    : 'https://images.unsplash.com/photo-1585386959984-a41552265aba?w=400&h=400&fit=crop&q=80';
+
+                return {
+                  name: cat.name,
+                  slug: cat.slug,
+                  icon: cat.icon || '📦',
+                  image: await fetchUnsplashImage(`${cat.name} products`, fallback, 'squarish'),
+                };
+              }),
+            )
           : [];
 
         setCategories(formattedCategories);
@@ -375,10 +459,10 @@ export default function HomePage() {
         console.error('Kategoriler yüklenirken hata:', error);
         // Fallback kategoriler
         setCategories([
-          { name: 'Elektronik', slug: 'elektronik', icon: '💻', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?w=100&h=100&fit=crop&q=80' },
-          { name: 'Moda', slug: 'moda', icon: '👔', image: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop&q=80' },
-          { name: 'Ev & Yaşam', slug: 'ev-yasam', icon: '🏠', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=100&h=100&fit=crop&q=80' },
-          { name: 'Spor', slug: 'spor', icon: '⚽', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=100&h=100&fit=crop&q=80' },
+          { name: 'Elektronik', slug: 'elektronik', icon: '💻', image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&h=400&fit=crop&q=80' },
+          { name: 'Moda', slug: 'moda', icon: '👔', image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400&h=400&fit=crop&q=80' },
+          { name: 'Ev & Yaşam', slug: 'ev-yasam', icon: '🏠', image: 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=400&h=400&fit=crop&q=80' },
+          { name: 'Spor', slug: 'spor', icon: '⚽', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=400&fit=crop&q=80' },
         ]);
       } finally {
         setCategoriesLoading(false);
@@ -394,7 +478,7 @@ export default function HomePage() {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [heroSlides.length]);
 
   // Search debounce
   useEffect(() => {
@@ -620,6 +704,27 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Beta / Development Notice */}
+      <section className="bg-white py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h3 className="text-sm font-medium text-blue-800">Platform Geliştirme Aşamasında</h3>
+                <div className="mt-2 text-sm text-blue-700">
+                  <p>Kep Marketplace şu anda beta aşamasındadır. Gösterilen ürünler demo amaçlıdır ve gerçek satış işlemi yapılmamaktadır. Platforma yakında gerçek ürünler eklenecektir.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Main Navigation Tabs */}
       <section className="bg-white shadow-lg border-b-4 border-orange-200 sticky top-16 z-30">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -635,21 +740,8 @@ export default function HomePage() {
               </div>
             ) : (
               <div className="flex overflow-x-auto gap-6 scrollbar-hide">
-                {/* Tüm Kategoriler Linki */}
-                <Link href="/category/all" className="flex-shrink-0 flex flex-col items-center gap-3 group">
-                  <div className="relative">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-500 to-red-500 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 flex items-center justify-center text-2xl">
-                      <span className="text-white drop-shadow-lg">📂</span>
-                    </div>
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-semibold text-gray-700 group-hover:text-orange-600 transition-colors leading-tight">Tüm Kategoriler</div>
-                  </div>
-                </Link>
-
-                {categories.map((category) => (
-                  <Link key={category.name} href={`/category/${category.slug}`} className="flex-shrink-0 flex flex-col items-center gap-3 group">
+                {categories.map((category, index) => (
+                  <Link key={category.slug || `${category.name}-${index}`} href={`/category/${category.slug}`} className="flex-shrink-0 flex flex-col items-center gap-3 group">
                     <div className="relative">
                       <div
                         className="w-16 h-16 rounded-full bg-cover bg-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-110 flex items-center justify-center text-2xl"
@@ -671,20 +763,71 @@ export default function HomePage() {
       </section>
 
       {/* Quick Links Bar */}
-      <section className="py-8 bg-gray-50 border-b-4 border-gray-200">
+      <section className="py-10 bg-gray-50 border-b-4 border-gray-200">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {quickLinks.map((link) => (
-              <Link key={link.id} href={link.link} className="group relative overflow-hidden rounded-xl text-center transition-all hover:shadow-lg hover:scale-105 bg-white p-4">
-                <div className="relative mb-3">
-                  <div className="w-16 h-16 mx-auto rounded-lg bg-cover bg-center shadow-md" style={{ backgroundImage: `url(${link.image})` }} />
-                  <div className={`absolute inset-0 bg-gradient-to-br ${link.color} opacity-30 group-hover:opacity-40 transition-opacity rounded-lg`}></div>
-                </div>
-                <div className="text-center">
-                  <h3 className="font-bold text-gray-900 text-sm mb-1 group-hover:text-orange-600 transition-colors">{link.title}</h3>
-                  <p className="text-xs text-gray-600">{link.subtitle}</p>
+              <Link key={link.id} href={link.link} className="group relative overflow-hidden rounded-2xl shadow-lg transition-all hover:-translate-y-1 hover:shadow-2xl">
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    backgroundImage: `url(${link.image})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                  }}
+                />
+                <div className={`absolute inset-0 bg-gradient-to-br ${link.color} opacity-80 group-hover:opacity-90 transition-opacity`} />
+                <div className="relative p-6 text-white space-y-3">
+                  <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur px-3 py-1 rounded-full text-xs font-semibold">
+                    <span>#{link.id.toString().padStart(2, '0')}</span>
+                    <span className="text-white/80">Kep Öneriyor</span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold mb-1">{link.title}</h3>
+                    <p className="text-sm text-white/80">{link.subtitle}</p>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-white/80">
+                    <span>Daha Fazla</span>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
                 </div>
               </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Inspiration Gallery */}
+      <section className="bg-gray-900 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
+            <div>
+              <h2 className="text-3xl font-bold text-white">İlham Köşesi</h2>
+              <p className="text-gray-300 mt-2 max-w-2xl">Kep ekosistemindeki işletmelerden ilham verici kareleri keşfedin. Vitrininizi tasarlarken bu referanslardan yararlanın.</p>
+            </div>
+            <Link href="/stories" className="text-sm font-semibold text-orange-400 hover:text-orange-300 transition">
+              Daha Fazla Hikâye →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {inspirationImages.map((item, idx) => (
+              <div key={item.id} className="relative group overflow-hidden rounded-3xl shadow-xl border border-white/10 h-64 sm:h-72">
+                <Image src={item.url} alt={item.alt} fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="(max-width: 1024px) 100vw, 33vw" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 flex items-end justify-between text-white">
+                  <div>
+                    <p className="text-xs uppercase tracking-wider text-orange-300">Hikâye {idx + 1}</p>
+                    <h3 className="text-lg font-semibold mt-1 capitalize">{item.alt}</h3>
+                  </div>
+                  <span className="inline-flex items-center justify-center w-10 h-10 rounded-full bg-white/20 backdrop-blur border border-white/30">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5-5 5M6 7l5 5-5 5" />
+                    </svg>
+                  </span>
+                </div>
+              </div>
             ))}
           </div>
         </div>

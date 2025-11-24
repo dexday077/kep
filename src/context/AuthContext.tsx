@@ -201,11 +201,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    return { error };
+    
+    // MFA kontrolü yapılacak (login sayfasında)
+    return { error, requiresMFA: true };
   };
 
   const signUp = async (email: string, password: string, userRole: 'customer' | 'seller', additionalData?: { fullName?: string; phone?: string; shopName?: string }) => {

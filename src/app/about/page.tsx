@@ -72,10 +72,28 @@ export default function AboutPage() {
           </div>
         </div>
 
-        {/* Contact Section */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Bize Ulaşın</h2>
+        {/* Company Information Section */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12 mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Şirket Bilgileri</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Genel Bilgiler</h3>
+              <p className="text-gray-600 mb-2">
+                <strong>Şirket Ünvanı:</strong> KEPENEK İNŞAAT SAN. VE TİC. LTD.ŞTİ.
+              </p>
+              <p className="text-gray-600 mb-2">
+                <strong>Vergi Dairesi:</strong> Alanya Vergi Dairesi
+              </p>
+              <p className="text-gray-600 mb-2">
+                <strong>Vergi No:</strong> 5440052468
+              </p>
+              <p className="text-gray-600 mb-2">
+                <strong>Ticaret Sicil No:</strong> 2949
+              </p>
+              <p className="text-gray-600">
+                <strong>Kep Adresi:</strong> kepenekinsaat@hs01.kep.tr
+              </p>
+            </div>
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">Adres</h3>
               <p className="text-gray-600">
@@ -85,21 +103,58 @@ export default function AboutPage() {
                 <br />
                 Kübra İş Merkezi, No: 10
                 <br />
-                Alanya / Antalya
+                Alanya / Antalya, Türkiye
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Contact Section */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-8 md:p-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Bize Ulaşın</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <h3 className="font-semibold text-gray-900 mb-3">İletişim</h3>
               <p className="text-gray-600 mb-2">
                 <strong>Telefon:</strong>{' '}
                 <a href="tel:+902425173440" className="text-orange-600 hover:underline">
-                  0242 517 34 40
+                  0242 517 3440
                 </a>
               </p>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-2">
                 <strong>E-posta:</strong>{' '}
                 <a href="mailto:info@keporganization.com" className="text-orange-600 hover:underline">
                   info@keporganization.com
+                </a>
+              </p>
+              <p className="text-gray-600 mb-2">
+                <strong>Kep Adresi:</strong>{' '}
+                <a href="mailto:kepenekinsaat@hs01.kep.tr" className="text-orange-600 hover:underline">
+                  kepenekinsaat@hs01.kep.tr
+                </a>
+              </p>
+              <p className="text-gray-600">
+                <strong>Çalışma Saatleri:</strong> Pazartesi - Cuma, 09:00 - 18:00
+              </p>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3">Destek</h3>
+              <p className="text-gray-600 mb-2">
+                <strong>Müşteri Hizmetleri:</strong>{' '}
+                <a href="mailto:destek@keporganization.com" className="text-orange-600 hover:underline">
+                  destek@keporganization.com
+                </a>
+              </p>
+              <p className="text-gray-600 mb-2">
+                <strong>İade ve İptal:</strong>{' '}
+                <a href="mailto:iade@keporganization.com" className="text-orange-600 hover:underline">
+                  iade@keporganization.com
+                </a>
+              </p>
+              <p className="text-gray-600">
+                <strong>KVKK:</strong>{' '}
+                <a href="mailto:kvkk@keporganization.com" className="text-orange-600 hover:underline">
+                  kvkk@keporganization.com
                 </a>
               </p>
             </div>

@@ -100,9 +100,18 @@ export default function ProductCard({ product }: { product: Product }) {
         </div>
 
         {/* Add to Cart Button */}
-        <button onClick={handleAddToCart} className="w-full mt-3 bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-orange-700 transition-all opacity-100 group-hover:scale-105 transform">
-          Sepete Ekle
-        </button>
+        <div className="relative">
+          <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold z-10 shadow-md">
+            DEMO
+          </span>
+          <button 
+            onClick={handleAddToCart} 
+            className="w-full mt-3 bg-orange-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-orange-700 transition-all opacity-100 group-hover:scale-105 transform"
+            title="Demo ürün - Gerçek satış yapılmamaktadır"
+          >
+            Sepete Ekle
+          </button>
+        </div>
       </div>
     </div>
   );

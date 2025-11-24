@@ -5,12 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import Image from 'next/image';
+import MFAVerification from '@/components/mfa/MFAVerification';
+import { MFAService } from '@/lib/mfa-service';
+import { supabase } from '@/lib/supabase';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [requiresMFA, setRequiresMFA] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string>('');
   const { signIn, userRole } = useAuth();
   const router = useRouter();
 
@@ -19,22 +24,86 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
-    const { error } = await signIn(email, password);
+    const result = await signIn(email, password);
 
-    if (error) {
-      setError(error.message);
+    if (result.error) {
+      setError(result.error.message);
       setLoading(false);
-    } else {
-      // Role-based redirect
-      if (userRole === 'admin') {
-        router.push('/admin');
-      } else if (userRole === 'seller') {
-        router.push('/seller');
-      } else {
-        router.push('/');
+      return;
+    }
+
+    // MFA kontrolü
+    if (supabase && result.requiresMFA !== false) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // MFA faktörlerini kontrol et
+          const factors = await MFAService.listFactors();
+          
+          if (factors.length > 0 && factors.some(f => f.is_enabled && f.is_verified)) {
+            // Aktif MFA faktörü var
+            const activeFactor = factors.find(f => f.is_enabled && f.is_verified);
+            if (activeFactor) {
+              setMfaFactorId(activeFactor.id);
+              setRequiresMFA(true);
+              setLoading(false);
+              return;
+            }
+          }
+        }
+      } catch (err) {
+        // MFA kontrolü başarısız oldu, normal girişe devam et
+        console.warn('MFA check failed, continuing with normal login:', err);
       }
     }
+
+    // Normal giriş (MFA yok)
+    if (userRole === 'admin') {
+      router.push('/admin');
+    } else if (userRole === 'seller') {
+      router.push('/seller');
+    } else {
+      router.push('/');
+    }
+    setLoading(false);
   };
+
+  const handleMFAVerified = async () => {
+    // MFA doğrulandı, kullanıcıyı yönlendir
+    if (userRole === 'admin') {
+      router.push('/admin');
+    } else if (userRole === 'seller') {
+      router.push('/seller');
+    } else {
+      router.push('/');
+    }
+  };
+
+  // MFA verification ekranı göster
+  if (requiresMFA && mfaFactorId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md mx-auto">
+          <div className="text-center mb-8">
+            <Link href="/" className="inline-block mb-6">
+              <Image src="/logo/kep_marketplace_logo.svg" alt="Kep Marketplace" width={200} height={60} className="mx-auto" />
+            </Link>
+          </div>
+          <MFAVerification
+            factorId={mfaFactorId}
+            onVerified={handleMFAVerified}
+            onError={(errorMsg) => setError(errorMsg)}
+          />
+          {error && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-12 px-4 sm:px-6 lg:px-8">

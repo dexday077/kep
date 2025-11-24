@@ -135,32 +135,86 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-gray-600">
-            <p className="font-medium">© {new Date().getFullYear()} Kep Marketplace. Tüm hakları saklıdır.</p>
-            <p className="text-xs mt-1">Avsallar / Alanya - Türkiye</p>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="flex gap-4">
-              <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Twitter">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Instagram">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.418-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.928.875 1.418 2.026 1.418 3.323s-.49 2.448-1.418 3.244c-.875.807-2.026 1.297-3.323 1.297zm7.83-9.781c-.49 0-.928-.175-1.297-.49-.368-.315-.49-.753-.49-1.243 0-.49.122-.928.49-1.243.369-.315.807-.49 1.297-.49s.928.175 1.297.49c.368.315.49.753.49 1.243 0 .49-.122.928-.49 1.243-.369.315-.807.49-1.297.49z" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Facebook">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956526.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                </svg>
-              </a>
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          {/* Company Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-sm text-gray-600">
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">KEPENEK İNŞAAT SAN. VE TİC. LTD.ŞTİ.</p>
+              <p className="mb-1">Avsallar Mahallesi, İncekum Caddesi</p>
+              <p className="mb-1">Kübra İş Merkezi, No: 10</p>
+              <p className="mb-1">Alanya / Antalya, Türkiye</p>
+              <p className="mt-2">
+                <strong>Telefon:</strong>{' '}
+                <a href="tel:+902425173440" className="text-orange-600 hover:underline">
+                  0242 517 3440
+                </a>
+              </p>
+              <p className="mb-1">
+                <strong>E-posta:</strong>{' '}
+                <a href="mailto:info@keporganization.com" className="text-orange-600 hover:underline">
+                  info@keporganization.com
+                </a>
+              </p>
+              <p>
+                <strong>Kep Adresi:</strong>{' '}
+                <a href="mailto:kepenekinsaat@hs01.kep.tr" className="text-orange-600 hover:underline">
+                  kepenekinsaat@hs01.kep.tr
+                </a>
+              </p>
             </div>
-            <div className="text-xs text-gray-500">
-              <span className="font-medium">Güvenli Ödeme:</span>
-              <span className="ml-2">💳 🏦 💰</span>
+            <div>
+              <p className="font-semibold text-gray-900 mb-2">Yasal Bilgiler</p>
+              <p className="mb-1">
+                <strong>Vergi Dairesi:</strong> Alanya Vergi Dairesi
+              </p>
+              <p className="mb-1">
+                <strong>Vergi No:</strong> 5440052468
+              </p>
+              <p className="mb-1">
+                <strong>Ticaret Sicil No:</strong> 2949
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Tüm ödemeler SSL şifreleme ile korunmaktadır.
+              </p>
+            </div>
+          </div>
+
+          {/* Development Disclaimer */}
+          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 mt-8 mb-6">
+            <p className="text-xs text-gray-700 text-center leading-relaxed">
+              <strong className="text-gray-900">Geliştirme Bildirimi:</strong> Kep Marketplace şu anda geliştirme aşamasındadır. 
+              Platformda gösterilen ürünler demo amaçlıdır ve gerçek satış işlemi yapılmamaktadır. 
+              Ödeme entegrasyonları tamamlandığında ve platform hazır olduğunda bilgilendirileceksiniz.
+            </p>
+          </div>
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-6 border-t border-gray-200">
+            <div className="text-sm text-gray-600">
+              <p className="font-medium">© {new Date().getFullYear()} Kep Marketplace. Tüm hakları saklıdır.</p>
+              <p className="text-xs mt-1">Avsallar / Alanya - Türkiye</p>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className="flex gap-4">
+                <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Twitter">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Instagram">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 6.62 5.367 11.987 11.988 11.987 6.62 0 11.987-5.367 11.987-11.987C24.014 5.367 18.637.001 12.017.001zM8.449 16.988c-1.297 0-2.448-.49-3.323-1.297C4.198 14.895 3.708 13.744 3.708 12.447s.49-2.448 1.418-3.323c.875-.807 2.026-1.297 3.323-1.297s2.448.49 3.323 1.297c.928.875 1.418 2.026 1.418 3.323s-.49 2.448-1.418 3.244c-.875.807-2.026 1.297-3.323 1.297zm7.83-9.781c-.49 0-.928-.175-1.297-.49-.368-.315-.49-.753-.49-1.243 0-.49.122-.928.49-1.243.369-.315.807-.49 1.297-.49s.928.175 1.297.49c.368.315.49.753.49 1.243 0 .49-.122.928-.49 1.243-.369.315-.807.49-1.297.49z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-orange-600 transition-colors" aria-label="Facebook">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956526.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </a>
+              </div>
+              <div className="text-xs text-gray-500">
+                <span className="font-medium">Güvenli Ödeme:</span>
+                <span className="ml-2">💳 🏦 💰</span>
+              </div>
             </div>
           </div>
         </div>

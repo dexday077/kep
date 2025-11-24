@@ -105,15 +105,25 @@ export default function HelpPage() {
               <h2 className="text-lg font-bold text-gray-900 mb-4">İletişim</h2>
               <div className="space-y-4">
                 <div>
+                  <p className="text-sm font-semibold text-gray-900 mb-2">KEPENEK İNŞAAT SAN. VE TİC. LTD.ŞTİ.</p>
+                  <p className="text-sm text-gray-700 mb-1"><strong>Vergi No:</strong> 5440052468</p>
+                </div>
+                <div>
                   <p className="text-sm font-semibold text-gray-700 mb-1">Telefon</p>
                   <a href="tel:+902425173440" className="text-orange-600 hover:underline">
-                    0242 517 34 40
+                    0242 517 3440
                   </a>
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-700 mb-1">E-posta</p>
                   <a href="mailto:info@keporganization.com" className="text-orange-600 hover:underline">
                     info@keporganization.com
+                  </a>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-700 mb-1">Kep Adresi</p>
+                  <a href="mailto:kepenekinsaat@hs01.kep.tr" className="text-orange-600 hover:underline">
+                    kepenekinsaat@hs01.kep.tr
                   </a>
                 </div>
                 <div>

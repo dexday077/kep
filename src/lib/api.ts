@@ -91,13 +91,31 @@ export class ApiService {
           `
           *,
           profiles!products_seller_id_fkey(full_name, shop_name),
-          categories(name, slug)
+          categories!products_category_id_fkey(name, slug, id)
         `,
         )
         .eq('is_active', true);
 
       if (filters?.category) {
-        query = query.eq('category', filters.category);
+        // Kategori slug ile filtreleme için önce kategori ID'sini bul
+        if (typeof filters.category === 'string' && isNaN(Number(filters.category))) {
+          // Slug'a göre kategori ID'sini bul
+          const { data: categoryData } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('slug', filters.category)
+            .single();
+          
+          if (categoryData) {
+            query = query.eq('category_id', categoryData.id);
+          } else {
+            // Kategori bulunamazsa boş sonuç döndür
+            return { data: [], count: 0 };
+          }
+        } else {
+          // category_id ile direkt filtrele
+          query = query.eq('category_id', filters.category);
+        }
       }
 
       if (filters?.minPrice) {
@@ -138,7 +156,43 @@ export class ApiService {
         query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
       }
 
-      const { data, error, count } = await query;
+      // Execute query
+      const { data, error } = await query;
+      
+      // Get count separately for category filter
+      let count = 0;
+      if (filters?.category && typeof filters.category === 'string' && isNaN(Number(filters.category))) {
+        // Category slug kullanıldıysa count için kategori ID'sini tekrar kullan
+        const { data: categoryData } = await supabase
+          .from('categories')
+          .select('id')
+          .eq('slug', filters.category)
+          .single();
+        
+        if (categoryData) {
+          const { count: productCount } = await supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true })
+            .eq('is_active', true)
+            .eq('category_id', categoryData.id);
+          count = productCount || 0;
+        }
+      } else if (!filters?.category) {
+        // Tüm ürünler için count
+        const { count: productCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true);
+        count = productCount || 0;
+      } else {
+        // category_id ile filtre varsa
+        const { count: productCount } = await supabase
+          .from('products')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_active', true)
+          .eq('category_id', filters.category);
+        count = productCount || 0;
+      }
 
       if (error) {
         // If table doesn't exist, return empty array
@@ -234,7 +288,7 @@ export class ApiService {
         return [];
       }
 
-      const { data, error } = await supabase.from('categories').select('*').eq('is_active', true).order('name');
+      const { data, error } = await supabase.from('categories').select('*').order('name');
 
       if (error) {
         // If table doesn't exist, return empty array
@@ -326,7 +380,24 @@ export class ApiService {
 
   // Reviews API
   static async createReview(reviewData: Omit<Review, 'id' | 'created_at'>) {
-    const { data, error } = await supabase.from('reviews').insert([reviewData]).select().single();
+    // Convert product_id and restaurant_id from string to number if needed (database expects number)
+    const reviewPayload: any = {
+      customer_id: reviewData.customer_id,
+      rating: reviewData.rating,
+      comment: reviewData.comment || null,
+    };
+
+    if (reviewData.product_id) {
+      const productIdNum = typeof reviewData.product_id === 'string' ? parseInt(reviewData.product_id, 10) : reviewData.product_id;
+      reviewPayload.product_id = isNaN(productIdNum) ? null : productIdNum;
+    }
+
+    if (reviewData.restaurant_id) {
+      const restaurantIdNum = typeof reviewData.restaurant_id === 'string' ? parseInt(reviewData.restaurant_id, 10) : reviewData.restaurant_id;
+      reviewPayload.restaurant_id = isNaN(restaurantIdNum) ? null : restaurantIdNum;
+    }
+
+    const { data, error } = await supabase.from('reviews').insert([reviewPayload]).select().single();
 
     if (error) throw error;
     return data;
