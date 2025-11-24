@@ -33,7 +33,7 @@ export default function LoginPage() {
     }
 
     // MFA kontrolü
-    if (supabase && result.requiresMFA !== false) {
+    if (supabase) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
